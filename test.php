@@ -1,4 +1,4 @@
 <?php 
 
-
-echo 123;exit;
+echo 12345;
+exit;
