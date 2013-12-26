@@ -1,5 +1,3 @@
 <?php 
-
-echo 12345;
-phpinfo();
+echo 123;
 exit;
