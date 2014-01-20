@@ -3,8 +3,52 @@
  * 一些demo
  */
 
+
+
+
 /**
- * 时间戳和微秒数的使用方法
+ * serialize() 序列化反序列化常用函数
+ * serialize,json_encode,var_export，一般会用json_encode形式的。
+ * TODO 好像使用的时候，是json_encode+base64待组合使用，去lib库里面研究一下。
+ */
+function eg_serialize(){
+	//使用serialize,unserialize
+	$a = array('a' => 'Apple' ,'b' => 'banana' , 'c' => 'Coconut');
+	$aa = serialize($a);
+	echo $aa;	//输出结果：a:3:{s:1:"a";s:5:"Apple";s:1:"b";s:6:"banana";s:1:"c";s:7:"Coconut";}
+	echo '<br/>';
+	printInfo(unserialize($aa));	//输出结果 Array ( [a] => Apple [b] => banana [c] => Coconut )
+	echo '<br/>';
+	
+	//使用压缩+base64编码+压缩的serialize,unserialize
+	$b = array('a'=>'test":"test','b'=>'tt":1"tt');		
+	echo $bb = serialize($b);		//输出结果：a:2:{s:1:"a";s:11:"test":"test";s:1:"b";s:8:"tt":1"tt";}
+	printInfo(unserialize($bb));	//输出$b
+	//当数组值包含如双引号、单引号或冒号等字符时，它们被反序列化后，可能会出现问题。为了克服这个问题，一个巧妙的技巧是使用base64_encode和base64_decode,但是base64编码将增加字符串的长度。为了克服这个问题，可以和gzcompress一起使用。
+	$bb = base64_encode(gzcompress(serialize($b)));		//输出结果：eJxLtDKyqi62MrRSSlSyBtJARklqcYkSlLIGSyWBaAugEFDcEERa1wIAwmEP1A==
+	echo $bb;
+	printInfo(unserialize(gzuncompress(base64_decode($bb))));	//输出结果:$b
+	
+	//使用json_encode,json_decode √√√
+	//使用json_encode和json_decode格式输出要serialize和unserialize格式快得多,JSON格式是可读的,JSON格式比serialize返回数据结果小,JSON格式是开放的、可移植的。其他语言也可以使用它.
+	$c = array('a' => 'Apple' ,'b' => 'banana' , 'c' => 'Coconut');
+	echo $cc = json_encode($c);		//输出结果：{"a":"Apple","b":"banana","c":"Coconut"}
+	echo '<br/>';
+	printInfo(json_decode($cc));	//输出结果!!!：stdClass Object ( [a] => Apple [b] => banana [c] => Coconut ) array ( 'a' => 'Apple', 'b' => 'banana', 'c' => 'Coconut', )
+	
+	//使用var_export函数把变量作为一个字符串输出；eval把字符串当成PHP代码来执行,一般不这么用
+	$a = array('a' => 'Apple' ,'b' => 'banana' , 'c' => 'Coconut');
+	$s = var_export($a , true);	//序列化数组
+	echo $s;	//输出结果： array ( 'a' => 'Apple', 'b' => 'banana', 'c' => 'Coconut', )
+	echo '<br/>';
+	eval('$my_var=' . $s . ';');	//反序列化
+	print_r($my_var);
+}
+// eg_serialize();
+
+
+/**
+ * microtime(true) 时间戳和微秒数的使用方法
  */
 function eg_microtime(){
 	$t1 = microtime();		//格式	0.69580900 1390037200 
@@ -20,8 +64,10 @@ function eg_microtime(){
 }
 // eg_microtime();
 
+
 /**
- * TODO 路径相关的方法
+ * 路径相关的方法
+ * TODO (未完待续)
  */
 function eg_path(){
 	echo __FILE__;				//输出	/Users/cui/Sites/git/demo/index.php
@@ -30,19 +76,16 @@ function eg_path(){
 	echo '<br>';
 	echo dirname(__FILE__);		//输出	/Users/cui/Sites/git/demo
 	echo '<br>';
-	print_r(pathinfo(__DIR__.'/test.php'));	//输出	Array ( [dirname] => /Users/cui/Sites/git/demo [basename] => test.php [extension] => php [filename] => test ) 
+	printInfo(pathinfo(__DIR__.'/test.php'));	//输出	Array ( [dirname] => /Users/cui/Sites/git/demo [basename] => test.php [extension] => php [filename] => test ) 
 	echo '<br>';
+	printInfo(pathinfo('abc.txt'));			//输出	Array ( [dirname] => . [basename] => abc.txt [extension] => txt [filename] => abc ) 
+	echo '<br>';
+	$path_parts = pathinfo('abc.a');;
+	echo '/var/'.$path_parts['dirname']; 	//输出	/var/.
+	
 }
 // eg_path();
 	
-// $path_parts = pathinfo(__DIR__.'/test.php');
-// print_r($path_parts);
-
-// print_r($_SERVER);
-// phpinfo();
-
-
-
 
 /**
  * array_merge() 的用法
@@ -76,6 +119,44 @@ function printInfo($arr,$is_detail=0){
 	echo '</pre>';
 }
 
+
+/**
+ * empty(),isset(),is_null()的实例测试
+ */
+function eg_empty_isset_is_null(){
+	$a;
+	$b = false;
+	$c = '';
+	$d = 0;
+	$e = null;
+	$f = array();
+
+	//empty()				//	输出
+	var_dump(empty($a));	//bool(true)
+	var_dump(empty($b));	//bool(true)
+	var_dump(empty($c));	//bool(true)
+	var_dump(empty($d));	//bool(true)
+	var_dump(empty($e));	//bool(true)
+	var_dump(empty($f));	//bool(true)
+	echo '<br>';
+	//isset()
+	var_dump(isset($a));	//bool(false)
+	var_dump(isset($b));	//bool(true)
+	var_dump(isset($c));	//bool(true)
+	var_dump(isset($d));	//bool(true)
+	var_dump(isset($e));	//bool(false)
+	var_dump(isset($f));	//bool(true)
+	echo '<br>';
+
+	//is_null()
+	var_dump(is_null($a));	//bool(true)
+	var_dump(is_null($b));	//bool(false)
+	var_dump(is_null($c));	//bool(false)
+	var_dump(is_null($d));	//bool(false)
+	var_dump(is_null($e));	//bool(true)
+	var_dump(is_null($f));	//bool(false)
+}
+// eg_empty_isset_is_null();
 
 exit;
 
@@ -129,3 +210,6 @@ microtime_float3();
 echo "microtime_float3=====";
 echo runtime($t1).'<br>';
 */
+ 
+// printInfo($_SERVER);
+
