@@ -2,7 +2,7 @@
 
 // printInfo($_SERVER);exit;
 
-$branch = 1;
+$branch = 2;
 
 echo strtotime("2009-09-10 16:00:10").'<br/>';	//输出 1252569610
 echo strtotime("10 September 2009").'<br/>';	//输出 1252512000
