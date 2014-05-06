@@ -3,7 +3,7 @@
  * 一些demo
  */
 
-$tttt = 1; 
+$tttt = 'branch'; 
 
 // if (in_array(1, array(1,2,3))) {
 // 	echo '1111';
