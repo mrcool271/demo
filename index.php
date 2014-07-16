@@ -3,7 +3,626 @@
  * 一些demo
  */
 
-$tttt = 'branch'; 
+//格式化数字
+$t = 0.0001;
+echo round($t,2);//0
+echo sprintf('%.2f',round($t,2));//0.00
+exit;
+
+//二维数组中每一个里面求交集
+$str1 = '74,75,76,77,78,79,80,81,82,83,84,85,86';
+$str2 = '74,75,76,77,83,84,85,86';
+
+$tmpStr[] = explode(',', $str1);
+$tmpStr[] = explode(',', $str2);
+
+$result = array();
+foreach ($tmpStr as $val) {
+	$in = array_intersect($result, $val);
+	if($in){
+		echo 11;
+	}
+	$result = array_merge($result,$val);
+	print_r($result);
+}
+
+print_r($tmpStr);
+exit;
+
+
+$str = '[{"city":"73,2","maxfreight":"1","issue":"11"},{"city":"74,75,76,77,78,79,80,81,82,83,84,85,86","maxfreight":"2","issue":"22"}]';
+$tmp = json_decode($str,true);
+print_r($tmp);
+exit;
+
+/**
+ * 如果类中没有方法或权限不是public的话，会默认的调用魔末方法__call(String $method,Array $arguments){}
+ */
+class MethodTest {
+	/**
+	 * @param string $name
+	 * @param array $arguments
+	 */
+	public function __call($name, $arguments) {
+		print_r($arguments);//Array ( [0] => test )
+	}
+	
+	protected function runTest() { 
+		echo '111';
+	}
+}
+
+$obj = new MethodTest;
+$obj->runTest('test');
+exit;
+
+
+$str = 'abc';
+print_r((array)$str);//Array ( [0] => abc )
+exit;
+
+
+
+//敏感词放入缓存中
+//算法：把敏感词首字放入数组中，校验时如果首字在在根据首字数组中的值找下一个。
+// $arr = array(array('mask_word'=>'测试','mask_type'=>'1'),array('mask_word'=>'评论人民','mask_type'=>'1'),array('mask_word'=>'是','mask_type'=>'1'));//Array ( [0] => Array ( [27979] => 1 [35780] => 2 [26159] => -2 ) [1] => Array ( [35797] => -2 ) [2] => Array ( [35770] => 3 ) [3] => Array ( [20154] => 4 ) [4] => Array ( [27665] => -2 ) )
+/**输出为
+ * Array
+(
+    [0] => Array（首字）
+        (
+            [27979] => 1 （下一个字的位置的key）
+            [35780] => 2
+            [26159] => -2
+        )
+
+    [1] => Array
+        (
+            [35797] => -2
+        )
+
+    [2] => Array
+        (
+            [35770] => 3
+        )
+
+    [3] => Array
+        (
+            [20154] => 4
+        )
+
+    [4] => Array
+        (
+            [27665] => -2（结束）
+        )
+
+)
+
+ */
+$arr = array(array('mask_word'=>'abc','mask_type'=>'1'),array('mask_word'=>'acd','mask_type'=>'5'),array('mask_word'=>'abcde','mask_type'=>'1'));//Array ( [0] => Array ( [97] => 1 ) [1] => Array ( [98] => 2 [99] => 3 ) [2] => Array ( [99] => -2 ) [3] => Array ( [100] => -6 ) )
+/**输出为
+ * Array
+(
+    [0] => Array
+        (
+            [97] => 1
+        )
+
+    [1] => Array
+        (
+            [98] => 2
+            [99] => 3
+        )
+
+    [2] => Array
+        (
+            [99] => -2
+        )
+
+    [3] => Array
+        (
+            [100] => -6
+        )
+
+)
+
+ */
+print_r( serialization($arr));
+exit;
+
+function serialization($wordsInfo) {
+	$serialTable = array();
+	$status_num = 0;
+	foreach ($wordsInfo as $word) {
+		$ptr = 0; //当前状态指针
+		$word['mask_word'] = trim($word['mask_word']);
+		$word['mask_word'] = strtolower($word['mask_word']);
+		$length = strlen($word['mask_word']);
+		for ($i = 0; $i < $length; ++$i) {
+			if ((ord($word['mask_word']{$i}) & 0xf0) == 224) { //232 & 240 即 1110 1000 & 1111 0000 结果为 1110 0000 十进制为224，代表是中文？
+				//a chinese char contains 3 * 8bit
+				$sword = $word['mask_word']{$i} . $word['mask_word']{$i+1} . $word['mask_word']{$i+2};
+				echo $hash_num = hashChar($sword);
+				echo '<br>';
+				$i += 2;
+			}
+			else {
+				//a normal char contains 1 * 8bit
+				$hash_num = hashChar($word['mask_word']{$i});
+			}
+			if (empty($serialTable[$ptr][$hash_num])) {
+				//a new char has not exist in the hashtable
+				if ($i < $length - 1) {
+					//the 1st or 2nd char in a chinese word
+					++$status_num;
+					$serialTable[$ptr][$hash_num] = $status_num;
+					$ptr = $status_num;
+				}
+				else {
+					//a normal char or the 3rd char in a chinese word
+					$serialTable[$ptr][$hash_num] = -1 - intval($word['mask_type']);
+				}
+			}
+			elseif ($serialTable[$ptr][$hash_num] < 0) {
+				//TODO now, the 'abcd' is not work is exist 'abc';
+				$preType = -1 - $serialTable[$ptr][$hash_num];
+				if (intval($word['mask_type']) > $preType) {
+					if ($i == $length - 1) {
+						$serialTable[$ptr][$hash_num] = -1 - intval($word['mask_type']);
+					}
+				}
+				break;
+			}
+			else {
+				$ptr = $serialTable[$ptr][$hash_num];
+			}
+		}
+	}
+	return $serialTable;
+}
+
+//hash the character
+function hashChar($word) {
+	switch(strlen($word)) {
+		case 1:  //this is non-chinese character, just return the ascii code
+			return ord($word);
+			break;
+		case 3:  //if chinese character, the hash = ((first bit)-224)*64*64+((second bit)-128)*64+(third bit)
+			$ret = ((ord($word{0}) & 0x1f) << 12) + ((ord($word{1}) & 0x7f) << 6) + (ord($word{2}) & 0x7f);
+			return $ret;
+	}
+}
+
+exit;
+
+// echo base_convert(240, 10, 2);//进制转换
+// echo ord('谁');
+// echo chr(0xE6).chr(0x88).chr(0x91);
+// echo dechex(230);
+
+// (ord($word['mask_word']{$i}) & 0xf0) 
+// exit;
+
+//echo microtime();
+// ECHO 1403796355 / 86400;
+// ECHO 1403796355 - 1262275200;
+// echo date('Ymd',1000000000);
+// echo 1000000000/(365*86400);
+
+// echo sprintf("%03d", 8);//008
+
+// echo 5 & 6;//4
+// echo 2 & 2;//2
+// echo ord('中');
+// echo 0xf0;
+
+
+// echo ord('我');
+// echo chr(0xE6).chr(0x88).chr(0x91);
+// echo dechex(230);
+
+$a = '我';
+echo $a[0];
+echo ord($a{0});
+// echo ord($a[0]);
+// echo dechex(ord($a[2]));
+exit;
+
+
+
+//位运算 简单的权限控制等应用
+$a = 1 << 0;
+$b = 1 << 1;
+$c = 1 << 2;
+
+echo $d = $a | $c ;
+echo $d & $b;//0
+exit;
+
+
+print_r(getTimeStamp());
+function getTimeStamp()
+{
+	list($microTime, $seconds) = explode(" ", microtime());
+	echo  $microTime = intval($microTime * 1000000);
+
+	$timeStamp = array (
+			0 => $seconds,
+			1 => substr($microTime, 0, 3),
+			2 => substr($microTime, 3, 3),
+	);
+	return $timeStamp;
+}
+exit;
+
+
+//取差集注意
+$array1 = array('aaa'=>'0','status'=>'0');
+$array2 = array('aaa'=>'0','status'=>'1');
+
+$result = array_diff($array1, $array2);//不比较键名,只比较值
+print_r($result);//Array ( )
+$result2 = array_diff_assoc($array1, $array2);//比较键名
+print_r($result2);//Array ( [status] => 0 )
+
+//array_diff_assoc() 函数返回两个数组的差集数组。该数组包括了所有在被比较的数组中，但是不在任何其他参数数组中的键和值。
+//和 array_diff() 函数 不同，本函数要求键名和键值都进行比较。返回的数组中键名保持不变。 
+exit;
+
+
+$firstArray = array('aaa'=>'2','status1'=>'2');
+$secondArray = array('aaa'=>'2','status'=>'2');
+$tmp = array_flip($secondArray);//Array ( [2] => status )，相当于去重了
+print_r($tmp);
+$result = array_diff_fast($firstArray, $secondArray);
+
+print_r($result);//Array ( )
+//array_diff()函数在处理大数组时的效率不高
+function array_diff_fast($firstArray, $secondArray) {
+	// 转换第二个数组的键值关系
+	$secondArray = array_flip($secondArray);
+	// 循环第一个数组
+	foreach($firstArray as $key => $value) {
+		// 如果第二个数组中存在第一个数组的值
+		if (isset($secondArray[$value])) {
+			// 移除第一个数组中对应的元素
+			unset($firstArray[$key]);
+		}
+	}
+	return $firstArray;
+}
+//注意：PHP 内置的 array_diff() 函数可以处理多个数组，而本文提供的方法只处理了两个数组的比较。
+
+
+
+
+print_r($_SERVER);
+exit;
+
+/** 
+
+//敏感词放入缓存中
+$arr = array(array('mask_word'=>'测试','mask_type'=>'1'),array('mask_word'=>'评论人','mask_type'=>'1'));
+print_r( serialization($arr));
+exit;
+
+function serialization($wordsInfo) {
+	$serialTable = array();
+	$status_num = 0;
+	foreach ($wordsInfo as $word) {
+		$ptr = 0; //当前状态指针
+		$word['mask_word'] = trim($word['mask_word']);
+		$word['mask_word'] = strtolower($word['mask_word']);
+		$length = strlen($word['mask_word']);
+		for ($i = 0; $i < $length; ++$i) {
+			if ((ord($word['mask_word']{$i}) & 0xf0) == 224) { //232 & 240 即 1110 1000 & 1111 0000 结果为 1110 0000 十进制为224，代表是中文？   
+				//a chinese char contains 3 * 8bit
+				$sword = $word['mask_word']{$i} . $word['mask_word']{$i+1} . $word['mask_word']{$i+2};
+				echo $hash_num = hashChar($sword);
+				$i += 2;
+			}
+			else {
+				//a normal char contains 1 * 8bit
+				$hash_num = hashChar($word['mask_word']{$i});
+			}
+			if (empty($serialTable[$ptr][$hash_num])) {
+				//a new char has not exist in the hashtable
+				if ($i < $length - 1) {
+					//the 1st or 2nd char in a chinese word
+					++$status_num;
+					$serialTable[$ptr][$hash_num] = $status_num;
+					$ptr = $status_num;
+				}
+				else {
+					//a normal char or the 3rd char in a chinese word
+					$serialTable[$ptr][$hash_num] = -1 - intval($word['mask_type']);
+				}
+			}
+			elseif ($serialTable[$ptr][$hash_num] < 0) {
+				//TODO now, the 'abcd' is not work is exist 'abc';
+				$preType = -1 - $serialTable[$ptr][$hash_num];
+				if (intval($word['mask_type']) > $preType) {
+					if ($i == $length - 1) {
+						$serialTable[$ptr][$hash_num] = -1 - intval($word['mask_type']);
+					}
+				}
+				break;
+			}
+			else {
+				$ptr = $serialTable[$ptr][$hash_num];
+			}
+		}
+	}
+	return $serialTable;
+}
+
+//hash the character
+function hashChar($word) {
+	switch(strlen($word)) {
+		case 1:  //this is non-chinese character, just return the ascii code
+			return ord($word);
+			break;
+		case 3:  //if chinese character, the hash = ((first bit)-224)*64*64+((second bit)-128)*64+(third bit)
+			$ret = ((ord($word{0}) & 0x1f) << 12) + ((ord($word{1}) & 0x7f) << 6) + (ord($word{2}) & 0x7f);
+			return $ret;
+	}
+}
+
+exit;
+*/
+
+
+/**
+ * PHP实例——字符串分割（完美支持中英文，兼容mb_substr）
+ +----------------------------------------------------------
+ * 字符串截取，支持中文和其他编码
+ +----------------------------------------------------------
+ * @static
+ * @access public
+ +----------------------------------------------------------
+ * @param string $str 需要转换的字符串
+ * @param string $start 开始位置
+ * @param string $length 截取长度
+ * @param string $charset 编码格式
+ * @param string $suffix 截断显示字符
+ +----------------------------------------------------------
+ * @return string
+ +----------------------------------------------------------
+ */
+function msubstr($str, $start, $length, $charset="utf-8", $suffix=true)
+{
+	if(function_exists("mb_substr")){
+		$slice = mb_substr($str, $start, $length, $charset);
+	}elseif(function_exists('iconv_substr')) {
+		$slice = iconv_substr($str,$start,$length,$charset);
+		if(false === $slice) {
+			$slice = '';
+		}
+	}else{
+		$re['utf-8']   = "/[\x01-\x7f]|[\xc2-\xdf][\x80-\xbf]|[\xe0-\xef][\x80-\xbf]{2}|[\xf0-\xff][\x80-\xbf]{3}/";
+		$re['gb2312'] = "/[\x01-\x7f]|[\xb0-\xf7][\xa0-\xfe]/";
+		$re['gbk']    = "/[\x01-\x7f]|[\x81-\xfe][\x40-\xfe]/";
+		$re['big5']   = "/[\x01-\x7f]|[\x81-\xfe]([\x40-\x7e]|\xa1-\xfe])/";
+		preg_match_all($re[$charset], $str, $match);
+		$slice = join("",array_slice($match[0], $start, $length));
+	}
+	return $suffix ? $slice.'...' : $slice;
+}
+
+exit;
+
+
+ 
+$str = '';
+if(isset($str)) {
+	echo 1;
+}
+if(empty($str)) {
+	echo 2;
+}
+exit;
+
+
+//1. 获取所有可用的模块 - get_loaded_extensions 该函数返回所有已经加载的（可用的）模块。 
+// print_r(get_loaded_extensions());
+
+$arr = get_defined_functions();
+print_r($arr);
+exit;
+
+ $arr = array(
+ 	array(1,2,3),array(4,5,6)
+ );
+ print_r(current($arr));
+ exit;
+ 
+ 
+
+printInfo($_SERVER);exit;
+
+
+/**
+ * base64编码（网络传统文本图片音频啥的）
+ */
+$str = "http://www.baidu.com?a= 1&''/*";
+$tmp = base64_encode($str);
+echo $tmp;
+echo base64_decode($tmp);
+exit;
+
+
+
+/**
+ * 转码
+ */
+$str = file_get_contents('/Users/cui/cui.out');
+// $xml = array('a'=>12,'b'=>3);
+// $str = '{"track":{"billcode":"768362251981","detail":[{"time":"2014\/04\/04 15:05:47","scantype":"\u7b7e\u6536","memo":"\u5df2\u7b7e\u6536,\u7b7e\u6536\u4eba\u662f\u5df2\u7b7e\u6536"}]}}';
+// echo $str;exit;
+// $str = iconv('gb2312', 'utf-8', $str);
+// if (function_exists("mb_convert_encoding")) {
+// 	$str = mb_convert_encoding($str,'utf-8','gb2312');
+// } elseif(function_exists("iconv")) {
+// 	$str = iconv('gb2312','utf-8',$str);
+// } else die("sorry, you have no libs support for charset changes.");
+// echo $str;
+// exit;
+$str = str_replace('gb2312', 'utf-8', $str);
+$str = mb_convert_encoding($str,'utf-8','gb2312');
+echo $str;exit;
+$xml = simplexml_load_string($str);
+// print_r($xml);
+$newExpress = json_decode(json_encode($xml),1);
+echo  json_encode($xml);
+printInfo($newExpress);
+exit;
+
+
+
+
+$json = '{"time":{"areaName":"","time":"1970-01-01 08:00:00","ftime":"1970-01-01 08:00:00","status":"2","context":"2"},"scantype":{"areaName":"","time":"1970-01-01 08:00:00","ftime":"1970-01-01 08:00:00","status":null,"context":null},"memo":{"areaName":"","time":"1970-01-01 08:00:00","ftime":"1970-01-01 08:00:00","status":null,"context":null}}';
+// printInfo(array_values(json_decode($json,1)));
+printInfo(json_decode($json,1));
+exit;
+
+
+//报名初复审结束时间
+$first_review_end_day = '2014-01-01';
+$first_review_end_hour =  0;
+$second_review_end_day = '2015-01-01';
+$second_review_end_hour =  0;
+$first_review_end_time = strtotime($first_review_end_day.' '.'2:00:00');
+$second_review_end_time = strtotime("{$second_review_end_day} {$second_review_end_hour}");
+
+$re = array('succ'=>0,'msg'=>$first_review_end_time);
+echo json_encode($re);
+exit;
+
+echo strtotime("2014-05-21");
+exit;
+
+$t = '{"start":"2014-05-11 15:50","end":"2014-05-31 23:50"}';
+$time = json_decode($t,TRUE);
+if( isset($time['start']) && isset($time['end']) && time()>strtotime($time['start']) && time()<strtotime($time['end']) ){
+	echo time();
+}
+
+
+exit;
+
+// $json = '[{"areaName":"","time":"2014-03-31 23:39:36","ftime":"2014-03-31 23:39:36","status":"\u6536\u4ef6","context":"\u5e7f\u4e1c\u5e7f\u5dde\u4e1c\u5ddd\u70b9 \u7684\u6536\u4ef6\u5458 \u7f57\u6c49\u4f19\u5df2\u6536\u4ef6"},{"areaName":"","time":"2014-04-01 00:27:07","ftime":"2014-04-01 00:27:07","status":"\u6536\u4ef6","context":"\u5e7f\u4e1c\u5e7f\u5dde\u4e1c\u5ddd\u70b9 \u7684\u6536\u4ef6\u5458 \u7f57\u6c49\u4f19\u5df2\u6536\u4ef6"},{"areaName":"","time":"2014-04-01 05:12:06","ftime":"2014-04-01 05:12:06","status":"\u5230\u4ef6","context":"\u5feb\u4ef6\u5df2\u5230\u8fbe\u5e7f\u4e1c\u5e7f\u5dde\u4e2d\u8f6c\u90e8"},{"areaName":"","time":"2014-04-01 05:43:23","ftime":"2014-04-01 05:43:23","status":"\u53d1\u4ef6","context":"\u7531\u5e7f\u4e1c\u5e7f\u5dde\u516c\u53f8 \u53d1\u5f80 \u5317\u4eac\u4e2d\u8f6c\u90e8"},{"areaName":"","time":"2014-04-01 05:43:23","ftime":"2014-04-01 05:43:23","status":"\u88c5\u888b","context":"\u5e7f\u4e1c\u5e7f\u5dde\u516c\u53f8 \u6b63\u5728\u8fdb\u884c \u88c5\u888b \u626b\u63cf"},{"areaName":"","time":"2014-04-01 05:52:05","ftime":"2014-04-01 05:52:05","status":"\u53d1\u4ef6","context":"\u7531\u5e7f\u4e1c\u5e7f\u5dde\u516c\u53f8 \u53d1\u5f80 \u5e7f\u5dde\u673a\u573a\u5317"},{"areaName":"","time":"2014-04-02 12:06:22","ftime":"2014-04-02 12:06:22","status":"\u5230\u4ef6","context":"\u5feb\u4ef6\u5df2\u5230\u8fbe\u5317\u4eac\u4e2d\u8f6c\u90e8"},{"areaName":"","time":"2014-04-02 12:07:26","ftime":"2014-04-02 12:07:26","status":"\u88c5\u888b","context":"\u5317\u4eac\u4e2d\u8f6c\u90e8 \u6b63\u5728\u8fdb\u884c \u88c5\u888b \u626b\u63cf"},{"areaName":"","time":"2014-04-02 12:07:26","ftime":"2014-04-02 12:07:26","status":"\u53d1\u4ef6","context":"\u7531\u5317\u4eac\u4e2d\u8f6c\u90e8 \u53d1\u5f80 \u5185\u8499\u53e4\u9102\u5c14\u591a\u65af\u516c\u53f8"},{"areaName":"","time":"2014-04-03 00:20:08","ftime":"2014-04-03 00:20:08","status":"\u53d1\u4ef6","context":"\u7531\u5317\u4eac\u4e2d\u8f6c\u90e8 \u53d1\u5f80 \u5185\u8499\u53e4\u9102\u5c14\u591a\u65af\u516c\u53f8"},{"areaName":"","time":"2014-04-03 21:35:28","ftime":"2014-04-03 21:35:28","status":"\u5230\u4ef6","context":"\u5feb\u4ef6\u5df2\u5230\u8fbe\u5185\u8499\u53e4\u9102\u5c14\u591a\u65af\u516c\u53f8"},{"areaName":"","time":"2014-04-03 21:36:15","ftime":"2014-04-03 21:36:15","status":"\u6d3e\u4ef6","context":"\u5185\u8499\u53e4\u9102\u5c14\u591a\u65af\u516c\u53f8 \u7684\u6d3e\u4ef6\u5458 \u8d2d\u7269\u4e2d\u5fc3\u5206\u90e8 \u6b63\u5728\u6d3e\u4ef6"},{"areaName":"","time":"2014-04-03 22:24:58","ftime":"2014-04-03 22:24:58","status":"\u5230\u4ef6","context":"\u5feb\u4ef6\u5df2\u5230\u8fbe\u5185\u8499\u53e4\u9102\u5c14\u591a\u65af\u516c\u53f8"},{"areaName":"","time":"2014-04-04 12:40:17","ftime":"2014-04-04 12:40:17","status":"\u6d3e\u4ef6","context":"\u5185\u8499\u53e4\u9102\u5c14\u591a\u65af\u516c\u53f8 \u7684\u6d3e\u4ef6\u5458 \u8d2d\u7269\u4e2d\u5fc304 \u6b63\u5728\u6d3e\u4ef6"},{"areaName":"","time":"2014-04-04 15:05:47","ftime":"2014-04-04 15:05:47","status":"\u7b7e\u6536","context":"\u5df2\u7b7e\u6536,\u7b7e\u6536\u4eba\u662f\u5df2\u7b7e\u6536"}]';
+// $json = '[{"areaName":"","time":"2014-05-10 20:09:38","ftime":"2014-05-10 20:09:38","status":"\u6536\u4ef6","context":"\u5e7f\u4e1c\u82b1\u90fd\u65b0\u534e \u7684\u6536\u4ef6\u5458 \u90ed\u4f1f\u4fca\u5df2\u6536\u4ef6"},{"areaName":"","time":"2014-05-10 20:10:16","ftime":"2014-05-10 20:10:16","status":"\u53d1\u4ef6","context":"\u7531\u5e7f\u4e1c\u82b1\u90fd\u65b0\u534e \u53d1\u5f80 \u5e7f\u4e1c\u5e7f\u5dde\u4e2d\u8f6c\u90e8"},{"areaName":"","time":"2014-05-10 22:07:08","ftime":"2014-05-10 22:07:08","status":"\u88c5\u888b","context":"\u5e7f\u4e1c\u82b1\u90fd\u65b0\u534e \u6b63\u5728\u8fdb\u884c \u88c5\u888b \u626b\u63cf"},{"areaName":"","time":"2014-05-10 22:07:08","ftime":"2014-05-10 22:07:08","status":"\u53d1\u4ef6","context":"\u7531\u5e7f\u4e1c\u82b1\u90fd\u65b0\u534e \u53d1\u5f80 \u5e7f\u4e1c\u5e7f\u5dde\u4e2d\u8f6c\u90e8"},{"areaName":"","time":"2014-05-10 23:55:45","ftime":"2014-05-10 23:55:45","status":"\u5230\u4ef6","context":"\u5feb\u4ef6\u5df2\u5230\u8fbe\u5e7f\u4e1c\u5e7f\u5dde\u516c\u53f8"},{"areaName":"","time":"2014-05-11 01:26:47","ftime":"2014-05-11 01:26:47","status":"\u53d1\u4ef6","context":"\u7531\u5e7f\u4e1c\u5e7f\u5dde\u516c\u53f8 \u53d1\u5f80 \u6c5f\u82cf\u5357\u4eac\u4e2d\u8f6c\u90e8"},{"areaName":"","time":"2014-05-12 02:17:47","ftime":"2014-05-12 02:17:47","status":"\u53d1\u4ef6","context":"\u7531\u6c5f\u82cf\u5357\u4eac\u4e2d\u8f6c\u90e8 \u53d1\u5f80 \u6c5f\u82cf\u5357\u4eac\u516c\u53f8"},{"areaName":"","time":"2014-05-12 02:27:21","ftime":"2014-05-12 02:27:21","status":"\u5230\u4ef6","context":"\u5feb\u4ef6\u5df2\u5230\u8fbe\u6c5f\u82cf\u5357\u4eac\u516c\u53f8"},{"areaName":"","time":"2014-05-12 02:40:13","ftime":"2014-05-12 02:40:13","status":"\u6d3e\u4ef6","context":"\u6c5f\u82cf\u5357\u4eac\u516c\u53f8 \u7684\u6d3e\u4ef6\u5458 \u6c64\u6d77\u6d0b \u6b63\u5728\u6d3e\u4ef6"},{"areaName":"","time":"2014-05-12 07:32:58","ftime":"2014-05-12 07:32:58","status":"\u5230\u4ef6","context":"\u5feb\u4ef6\u5df2\u5230\u8fbe\u6c5f\u82cf\u5357\u4eac\u516c\u53f8"},{"areaName":"","time":"2014-05-12 08:10:13","ftime":"2014-05-12 08:10:13","status":"\u6d3e\u4ef6","context":"\u6c5f\u82cf\u5357\u4eac\u516c\u53f8 \u7684\u6d3e\u4ef6\u5458 \u6c64\u6d77\u6d0b\u516b \u6b63\u5728\u6d3e\u4ef6"},{"areaName":"","time":"2014-05-12 12:42:31","ftime":"2014-05-12 12:42:31","status":"\u7b7e\u6536","context":"\u5df2\u7b7e\u6536,\u7b7e\u6536\u4eba\u662f\u5df2\u7b7e\u6536"}]';
+// $json = '{"a":{"button":"\u6652\u5355\u9886\u5238","url":"http:\/\/www.meilishuo.com\/club\/single\/554393?frm=shaidan_shuoming","pop":"\u7acb\u5373\u53bb\u6652\u5355\uff0c\u5c31\u6709\u673a\u4f1a\u83b7\u5f975\u5143\u4f18\u60e0\u5238\uff0c\u5feb\u6765\u6652\u5355\uff01"}}';
+// $json = '{"code":0,"info":[{"order":{"id":3976087,"order_id":140512172247,"status":4,"status_text":"\u4ea4\u6613\u6210\u529f","words":"","step":1,"total_price":"0.00","order_price":"0.01","goods_price":"0.01","ctime":"2014-05-12 15:34","shop_id":"100421","seller_uid":"35840103","buyer_uid":"63662389","express_price":"0.00","freight":"\u514d\u8fd0\u8d39","comment":"","express_id":"","express_company":"","pay_name":"\u652f\u4ed8\u5b9d","mls_phone":"4000800577","mls_qq":"4000800577","shop_name":"\u82b1\u975e\u82b1","phone":"18310733136","qq":"2035362761","im":{"qq":"2035362761","type":3,"shop_id":"100421"},"pay_time":"2014-05-12 15:34","send_time":"","receive_time":"","last_status_time":"","pay_time_out":"2014-05-13 15:34","receive_time_out":"","service_time_out":"","show_receive_button":0,"show_receive_button_detail":0,"has_commented":0,"coupon_id":0,"has_shoppingshow":0,"is_shoppingshow":1,"opt":[{"type":3,"text":"\u8bc4\u8bba"}],"coupon_msg":"","receive_allow_weixin":0},"goods":[{"mid":4400628,"twitter_id":2157132337,"goods_id":77555517,"price":"0.01","amount":1,"goods_title":"\u6652\u5355\u6d4b\u8bd5\u5355\u54c1\uff0c\u62cd\u4e0b\u4e0d\u53d1\u8d27\u4e0d\u9000\u6b3e\u7684~\u4e0d\u53c2\u52a0\u7f8e\u4e3d\u8bf4\u4efb\u4f55\u6d3b\u52a8\u54e6","goods_img":"http:\/\/img-tx.meilishuo.net\/pic\/u\/0f\/57\/90da8b5330b19646e7670f9a4fba_447_626.c6.jpg","b_pic_url":"http:\/\/imgtest.meiliworks.com\/pic\/b\/0f\/57\/90da8b5330b19646e7670f9a4fba_447_626.c6.jpg","prop":[{"name":"\u989c\u8272","value":"\u9ed1\u8272","is_show":"1"},{"name":"\u5c3a\u7801","value":"36","is_show":"1"}],"coupon_price":"0.00","is_doota":1,"ac_type":3,"refund_id":0,"refund_status_text":"","appeal_id":0,"appeal_status_text":"","service_allow":0,"refund_enter":0,"is_commented":1,"has_commented":0,"appeal":"","article_id":"","receive_allow":2}]},{"order":{"id":3974885,"order_id":140331400933,"status":2,"status_text":"\u7b49\u5f85\u786e\u8ba4\u6536\u8d27","words":"","step":0,"total_price":"0.01","order_price":"0.01","goods_price":"0.01","ctime":"2014-03-31 16:17","shop_id":"101277","seller_uid":"2740189","buyer_uid":"63662389","express_price":"0.00","freight":"\u514d\u8fd0\u8d39","comment":"","express_id":"","express_company":"","pay_name":"\u652f\u4ed8\u5b9d","mls_phone":"4000800577","mls_qq":"4000800577","shop_name":"\u4e13\u9500\u7f8e\u8863","phone":"13240733798","qq":"1000000","im":{"qq":"1000000","type":3,"shop_id":"101277"},"pay_time":"","send_time":"","receive_time":"","last_status_time":"2014-03-31 16:17","pay_time_out":"2014-04-01 16:17","receive_time_out":"","service_time_out":"","show_receive_button":0,"show_receive_button_detail":0,"has_commented":0,"coupon_id":0,"has_shoppingshow":0,"is_shoppingshow":0,"opt":[{"type":2,"text":"\u786e\u8ba4\u6536\u8d27"}],"coupon_msg":"","receive_allow_weixin":1},"goods":[{"mid":4399351,"twitter_id":2475537685,"goods_id":89853295,"price":"0.01","amount":1,"goods_title":"\u6d4b\u8bd5\u5546\u54c1\u65e0\u5fe7\u591f\u5b9d\u8d1d\uff0c\u4e0d\u9000\u4e0d\u6362\u614e\u62cd","goods_img":"http:\/\/imgst-dl.meilishuo.net\/pic\/u\/fd\/91\/df0353f3616b053b663f9e60dea2_798_925.c6.jpg","b_pic_url":"http:\/\/imgtest-dl.meiliworks.com\/pic\/b\/fd\/91\/df0353f3616b053b663f9e60dea2_798_925.c6.jpg","prop":[{"name":"\u989c\u8272","value":"\u9ed1\u8272","is_show":"1"},{"name":"\u5c3a\u7801","value":"-","is_show":"0"}],"coupon_price":"0.00","is_doota":1,"ac_type":0,"refund_id":0,"refund_status_text":"","appeal_id":0,"appeal_status_text":"","service_allow":0,"refund_enter":2,"is_commented":0,"has_commented":0,"appeal":"","article_id":"","receive_allow":1}]},{"order":{"id":3974884,"order_id":140331467745,"status":5,"status_text":"\u4ea4\u6613\u5173\u95ed","words":"","step":0,"total_price":"0.01","order_price":"0.01","goods_price":"0.01","ctime":"2014-03-31 16:17","shop_id":"100421","seller_uid":"35840103","buyer_uid":"63662389","express_price":"0.00","freight":"\u514d\u8fd0\u8d39","comment":"","express_id":"","express_company":"","pay_name":"\u652f\u4ed8\u5b9d","mls_phone":"4000800577","mls_qq":"4000800577","shop_name":"\u82b1\u975e\u82b1","phone":"18310733136","qq":"2035362761","im":{"qq":"2035362761","type":3,"shop_id":"100421"},"pay_time":"","send_time":"","receive_time":"","last_status_time":"2014-03-31 16:18","pay_time_out":"2014-04-01 16:17","receive_time_out":"","service_time_out":"","show_receive_button":0,"show_receive_button_detail":0,"has_commented":0,"coupon_id":0,"has_shoppingshow":0,"is_shoppingshow":0,"opt":[],"coupon_msg":"","receive_allow_weixin":0},"goods":[{"mid":4399350,"twitter_id":2157132337,"goods_id":77555517,"price":"0.01","amount":1,"goods_title":"\u6652\u5355\u6d4b\u8bd5\u5355\u54c1\uff0c\u62cd\u4e0b\u4e0d\u53d1\u8d27\u4e0d\u9000\u6b3e\u7684~\u4e0d\u53c2\u52a0\u7f8e\u4e3d\u8bf4\u4efb\u4f55\u6d3b\u52a8\u54e6","goods_img":"http:\/\/img-tx.meilishuo.net\/pic\/u\/0f\/57\/90da8b5330b19646e7670f9a4fba_447_626.c6.jpg","b_pic_url":"http:\/\/imgtest.meiliworks.com\/pic\/b\/0f\/57\/90da8b5330b19646e7670f9a4fba_447_626.c6.jpg","prop":[{"name":"\u989c\u8272","value":"\u9ed1\u8272","is_show":"1"},{"name":"\u5c3a\u7801","value":"35","is_show":"1"}],"coupon_price":"0.00","is_doota":1,"ac_type":3,"refund_id":0,"refund_status_text":"","appeal_id":0,"appeal_status_text":"","service_allow":0,"refund_enter":0,"is_commented":0,"has_commented":0,"appeal":"","article_id":"","receive_allow":2}]},{"order":{"id":3974883,"order_id":140331508845,"status":1,"status_text":"\u7b49\u5f85\u53d1\u8d27","words":"","step":1,"total_price":"0.01","order_price":"0.01","goods_price":"0.01","ctime":"2014-03-31 16:12","shop_id":"101277","seller_uid":"2740189","buyer_uid":"63662389","express_price":"0.00","freight":"\u514d\u8fd0\u8d39","comment":"","express_id":"","express_company":"","pay_name":"\u652f\u4ed8\u5b9d","mls_phone":"4000800577","mls_qq":"4000800577","shop_name":"\u4e13\u9500\u7f8e\u8863","phone":"13240733798","qq":"1000000","im":{"qq":"1000000","type":3,"shop_id":"101277"},"pay_time":"2014-03-31 16:13","send_time":"","receive_time":"","last_status_time":"","pay_time_out":"2014-04-01 16:12","receive_time_out":"","service_time_out":"","show_receive_button":0,"show_receive_button_detail":0,"has_commented":0,"coupon_id":0,"has_shoppingshow":0,"is_shoppingshow":0,"opt":[],"coupon_msg":"","receive_allow_weixin":0},"goods":[{"mid":4399349,"twitter_id":2475537685,"goods_id":89853295,"price":"0.01","amount":1,"goods_title":"\u6d4b\u8bd5\u5546\u54c1\u65e0\u5fe7\u591f\u5b9d\u8d1d\uff0c\u4e0d\u9000\u4e0d\u6362\u614e\u62cd","goods_img":"http:\/\/imgst-dl.meilishuo.net\/pic\/u\/fd\/91\/df0353f3616b053b663f9e60dea2_798_925.c6.jpg","b_pic_url":"http:\/\/imgtest-dl.meiliworks.com\/pic\/b\/fd\/91\/df0353f3616b053b663f9e60dea2_798_925.c6.jpg","prop":[{"name":"\u989c\u8272","value":"\u9ed1\u8272","is_show":"1"},{"name":"\u5c3a\u7801","value":"-","is_show":"0"}],"coupon_price":"0.00","is_doota":1,"ac_type":0,"refund_id":0,"refund_status_text":"","appeal_id":0,"appeal_status_text":"","service_allow":0,"refund_enter":1,"is_commented":0,"has_commented":0,"appeal":"","article_id":"","receive_allow":2}]},{"order":{"id":3974882,"order_id":140331699961,"status":1,"status_text":"\u7b49\u5f85\u53d1\u8d27","words":"","step":1,"total_price":"0.01","order_price":"0.01","goods_price":"0.01","ctime":"2014-03-31 16:12","shop_id":"100421","seller_uid":"35840103","buyer_uid":"63662389","express_price":"0.00","freight":"\u514d\u8fd0\u8d39","comment":"","express_id":"","express_company":"","pay_name":"\u652f\u4ed8\u5b9d","mls_phone":"4000800577","mls_qq":"4000800577","shop_name":"\u82b1\u975e\u82b1","phone":"18310733136","qq":"2035362761","im":{"qq":"2035362761","type":3,"shop_id":"100421"},"pay_time":"2014-03-31 16:13","send_time":"","receive_time":"","last_status_time":"","pay_time_out":"2014-04-01 16:12","receive_time_out":"","service_time_out":"","show_receive_button":0,"show_receive_button_detail":0,"has_commented":0,"coupon_id":0,"has_shoppingshow":0,"is_shoppingshow":0,"opt":[],"coupon_msg":"","receive_allow_weixin":0},"goods":[{"mid":4399348,"twitter_id":2157132337,"goods_id":77555517,"price":"0.01","amount":1,"goods_title":"\u6652\u5355\u6d4b\u8bd5\u5355\u54c1\uff0c\u62cd\u4e0b\u4e0d\u53d1\u8d27\u4e0d\u9000\u6b3e\u7684~\u4e0d\u53c2\u52a0\u7f8e\u4e3d\u8bf4\u4efb\u4f55\u6d3b\u52a8\u54e6","goods_img":"http:\/\/img-tx.meilishuo.net\/pic\/u\/0f\/57\/90da8b5330b19646e7670f9a4fba_447_626.c6.jpg","b_pic_url":"http:\/\/imgtest.meiliworks.com\/pic\/b\/0f\/57\/90da8b5330b19646e7670f9a4fba_447_626.c6.jpg","prop":[{"name":"\u989c\u8272","value":"\u9ed1\u8272","is_show":"1"},{"name":"\u5c3a\u7801","value":"37","is_show":"1"}],"coupon_price":"0.00","is_doota":1,"ac_type":3,"refund_id":0,"refund_status_text":"","appeal_id":0,"appeal_status_text":"","service_allow":0,"refund_enter":1,"is_commented":0,"has_commented":0,"appeal":"","article_id":"","receive_allow":2}]},{"order":{"id":3974881,"order_id":140331507299,"status":5,"status_text":"\u4ea4\u6613\u5173\u95ed","words":"","step":0,"total_price":"0.01","order_price":"0.01","goods_price":"0.01","ctime":"2014-03-31 16:06","shop_id":"100421","seller_uid":"35840103","buyer_uid":"63662389","express_price":"0.00","freight":"\u514d\u8fd0\u8d39","comment":"","express_id":"","express_company":"","pay_name":"\u652f\u4ed8\u5b9d","mls_phone":"4000800577","mls_qq":"4000800577","shop_name":"\u82b1\u975e\u82b1","phone":"18310733136","qq":"2035362761","im":{"qq":"2035362761","type":3,"shop_id":"100421"},"pay_time":"","send_time":"","receive_time":"","last_status_time":"2014-03-31 16:08","pay_time_out":"2014-04-01 16:06","receive_time_out":"","service_time_out":"","show_receive_button":0,"show_receive_button_detail":0,"has_commented":0,"coupon_id":0,"has_shoppingshow":0,"is_shoppingshow":0,"opt":[],"coupon_msg":"","receive_allow_weixin":0},"goods":[{"mid":4399347,"twitter_id":2157132337,"goods_id":77555517,"price":"0.01","amount":1,"goods_title":"\u6652\u5355\u6d4b\u8bd5\u5355\u54c1\uff0c\u62cd\u4e0b\u4e0d\u53d1\u8d27\u4e0d\u9000\u6b3e\u7684~\u4e0d\u53c2\u52a0\u7f8e\u4e3d\u8bf4\u4efb\u4f55\u6d3b\u52a8\u54e6","goods_img":"http:\/\/imgst-dl.meilishuo.net\/pic\/u\/55\/00\/b75af81b8ac5ef1b42f65af862ca_432_572.c6.jpg","b_pic_url":"http:\/\/imgst-dl.meilishuo.net\/pic\/b\/55\/00\/b75af81b8ac5ef1b42f65af862ca_432_572.c6.jpg","prop":[{"name":"\u989c\u8272","value":"\u7ea2\u8272","is_show":"1"},{"name":"\u5c3a\u7801","value":"35","is_show":"1"}],"coupon_price":"0.00","is_doota":1,"ac_type":3,"refund_id":0,"refund_status_text":"","appeal_id":0,"appeal_status_text":"","service_allow":0,"refund_enter":0,"is_commented":0,"has_commented":0,"appeal":"","article_id":"","receive_allow":2}]},{"order":{"id":3974785,"order_id":140324457513,"status":5,"status_text":"\u4ea4\u6613\u5173\u95ed","words":"","step":0,"total_price":"0.02","order_price":"0.02","goods_price":"0.02","ctime":"2014-03-24 17:59","shop_id":"100421","seller_uid":"35840103","buyer_uid":"63662389","express_price":"0.00","freight":"\u514d\u8fd0\u8d39","comment":"","express_id":"","express_company":"","pay_name":"\u652f\u4ed8\u5b9d","mls_phone":"4000800577","mls_qq":"4000800577","shop_name":"\u82b1\u975e\u82b1","phone":"18310733136","qq":"2035362761","im":{"qq":"2035362761","type":3,"shop_id":"100421"},"pay_time":"","send_time":"","receive_time":"","last_status_time":"2014-03-24 17:59","pay_time_out":"2014-03-25 17:59","receive_time_out":"","service_time_out":"","show_receive_button":0,"show_receive_button_detail":0,"has_commented":0,"coupon_id":0,"has_shoppingshow":0,"is_shoppingshow":0,"opt":[],"coupon_msg":"","receive_allow_weixin":0},"goods":[{"mid":4399204,"twitter_id":2158059851,"goods_id":77626967,"price":"0.02","amount":1,"goods_title":"\u6d4b\u8bd5\u5b9d\u8d1d\uff0c\u62cd\u4e0b\u4e0d\u9000\u6b3e\uff0c\u4e0d\u53d1\u8d27\u54e6~","goods_img":"http:\/\/imgtest.meiliworks.com\/pic\/u\/f3\/98\/04ed543f34b0585576958fa645d3_647_542.c6.jpg","b_pic_url":"http:\/\/imgtest-lx.meilishuo.net\/pic\/b\/f3\/98\/04ed543f34b0585576958fa645d3_647_542.c6.jpg","prop":[{"name":"\u989c\u8272","value":"\u9ec4\u8272","is_show":"1"},{"name":"\u5c3a\u7801","value":"-","is_show":"0"}],"coupon_price":"0.00","is_doota":1,"ac_type":0,"refund_id":0,"refund_status_text":"","appeal_id":0,"appeal_status_text":"","service_allow":0,"refund_enter":0,"is_commented":0,"has_commented":0,"appeal":"","article_id":"","receive_allow":2}]},{"order":{"id":3974784,"order_id":140324611361,"status":5,"status_text":"\u4ea4\u6613\u5173\u95ed","words":"","step":0,"total_price":"0.02","order_price":"0.02","goods_price":"0.02","ctime":"2014-03-24 17:08","shop_id":"100421","seller_uid":"35840103","buyer_uid":"63662389","express_price":"0.00","freight":"\u514d\u8fd0\u8d39","comment":"","express_id":"","express_company":"","pay_name":"\u652f\u4ed8\u5b9d","mls_phone":"4000800577","mls_qq":"4000800577","shop_name":"\u82b1\u975e\u82b1","phone":"18310733136","qq":"2035362761","im":{"qq":"2035362761","type":3,"shop_id":"100421"},"pay_time":"","send_time":"","receive_time":"","last_status_time":"2014-03-24 17:09","pay_time_out":"2014-03-25 17:08","receive_time_out":"","service_time_out":"","show_receive_button":0,"show_receive_button_detail":0,"has_commented":0,"coupon_id":0,"has_shoppingshow":0,"is_shoppingshow":0,"opt":[],"coupon_msg":"","receive_allow_weixin":0},"goods":[{"mid":4399203,"twitter_id":2158059851,"goods_id":77626967,"price":"0.02","amount":1,"goods_title":"\u6d4b\u8bd5\u5b9d\u8d1d\uff0c\u62cd\u4e0b\u4e0d\u9000\u6b3e\uff0c\u4e0d\u53d1\u8d27\u54e6~","goods_img":"http:\/\/imgtest.meiliworks.com\/pic\/u\/f3\/98\/04ed543f34b0585576958fa645d3_647_542.c6.jpg","b_pic_url":"http:\/\/imgtest-lx.meilishuo.net\/pic\/b\/f3\/98\/04ed543f34b0585576958fa645d3_647_542.c6.jpg","prop":[{"name":"\u989c\u8272","value":"\u9ec4\u8272","is_show":"1"},{"name":"\u5c3a\u7801","value":"-","is_show":"0"}],"coupon_price":"0.00","is_doota":1,"ac_type":0,"refund_id":0,"refund_status_text":"","appeal_id":0,"appeal_status_text":"","service_allow":0,"refund_enter":0,"is_commented":0,"has_commented":0,"appeal":"","article_id":"","receive_allow":2}]},{"order":{"id":3974783,"order_id":140324733927,"status":2,"status_text":"\u7b49\u5f85\u786e\u8ba4\u6536\u8d27","words":"","step":2,"total_price":"0.01","order_price":"0.02","goods_price":"0.02","ctime":"2014-03-24 16:59","shop_id":"100421","seller_uid":"35840103","buyer_uid":"63662389","express_price":"0.00","freight":"\u514d\u8fd0\u8d39","comment":"","express_id":"762364745988","express_company":"\u4e2d\u901a\u5feb\u9012","pay_name":"\u652f\u4ed8\u5b9d","mls_phone":"4000800577","mls_qq":"4000800577","shop_name":"\u82b1\u975e\u82b1","phone":"18310733136","qq":"2035362761","im":{"qq":"2035362761","type":3,"shop_id":"100421"},"pay_time":"2014-03-24 17:00","send_time":"2014-03-25 19:23","receive_time":"","last_status_time":"2014-03-24 16:59","pay_time_out":"2014-03-25 16:59","receive_time_out":"2014-04-04 19:23","service_time_out":"","show_receive_button":0,"show_receive_button_detail":0,"has_commented":0,"coupon_id":0,"has_shoppingshow":0,"is_shoppingshow":0,"opt":[{"type":2,"text":"\u786e\u8ba4\u6536\u8d27"}],"coupon_msg":"","receive_allow_weixin":1},"goods":[{"mid":4399202,"twitter_id":2158059851,"goods_id":77626967,"price":"0.02","amount":1,"goods_title":"\u6d4b\u8bd5\u5b9d\u8d1d\uff0c\u62cd\u4e0b\u4e0d\u9000\u6b3e\uff0c\u4e0d\u53d1\u8d27\u54e6~","goods_img":"http:\/\/imgtest.meiliworks.com\/pic\/u\/f3\/98\/04ed543f34b0585576958fa645d3_647_542.c6.jpg","b_pic_url":"http:\/\/imgtest-lx.meilishuo.net\/pic\/b\/f3\/98\/04ed543f34b0585576958fa645d3_647_542.c6.jpg","prop":[{"name":"\u989c\u8272","value":"\u9ec4\u8272","is_show":"1"},{"name":"\u5c3a\u7801","value":"-","is_show":"0"}],"coupon_price":"0.00","is_doota":1,"ac_type":0,"refund_id":0,"refund_status_text":"","appeal_id":0,"appeal_status_text":"","service_allow":0,"refund_enter":2,"is_commented":0,"has_commented":0,"appeal":"","article_id":"","receive_allow":1}]},{"order":{"id":3974777,"order_id":140324132765,"status":5,"status_text":"\u4ea4\u6613\u5173\u95ed","words":"","step":0,"total_price":"0.01","order_price":"0.01","goods_price":"0.01","ctime":"2014-03-24 15:55","shop_id":"100421","seller_uid":"35840103","buyer_uid":"63662389","express_price":"0.00","freight":"\u514d\u8fd0\u8d39","comment":"","express_id":"","express_company":"","pay_name":"\u652f\u4ed8\u5b9d","mls_phone":"4000800577","mls_qq":"4000800577","shop_name":"\u82b1\u975e\u82b1","phone":"18310733136","qq":"2035362761","im":{"qq":"2035362761","type":3,"shop_id":"100421"},"pay_time":"","send_time":"","receive_time":"","last_status_time":"2014-03-24 15:55","pay_time_out":"2014-03-25 15:55","receive_time_out":"","service_time_out":"","show_receive_button":0,"show_receive_button_detail":0,"has_commented":0,"coupon_id":0,"has_shoppingshow":0,"is_shoppingshow":0,"opt":[],"coupon_msg":"","receive_allow_weixin":0},"goods":[{"mid":4399196,"twitter_id":2157132337,"goods_id":77555517,"price":"0.01","amount":1,"goods_title":"\u6652\u5355\u6d4b\u8bd5\u5355\u54c1\uff0c\u62cd\u4e0b\u4e0d\u53d1\u8d27\u4e0d\u9000\u6b3e\u7684~\u4e0d\u53c2\u52a0\u7f8e\u4e3d\u8bf4\u4efb\u4f55\u6d3b\u52a8\u54e6","goods_img":"http:\/\/img-tx.meilishuo.net\/pic\/u\/0f\/57\/90da8b5330b19646e7670f9a4fba_447_626.c6.jpg","b_pic_url":"http:\/\/imgtest.meiliworks.com\/pic\/b\/0f\/57\/90da8b5330b19646e7670f9a4fba_447_626.c6.jpg","prop":[{"name":"\u989c\u8272","value":"\u9ed1\u8272","is_show":"1"},{"name":"\u5c3a\u7801","value":"36","is_show":"1"}],"coupon_price":"0.00","is_doota":1,"ac_type":3,"refund_id":0,"refund_status_text":"","appeal_id":0,"appeal_status_text":"","service_allow":0,"refund_enter":0,"is_commented":0,"has_commented":0,"appeal":"","article_id":"","receive_allow":2}]},{"order":{"id":3974776,"order_id":140324419501,"status":5,"status_text":"\u4ea4\u6613\u5173\u95ed","words":"","step":0,"total_price":"0.01","order_price":"0.01","goods_price":"0.01","ctime":"2014-03-24 15:52","shop_id":"100421","seller_uid":"35840103","buyer_uid":"63662389","express_price":"0.00","freight":"\u514d\u8fd0\u8d39","comment":"","express_id":"","express_company":"","pay_name":"\u652f\u4ed8\u5b9d","mls_phone":"4000800577","mls_qq":"4000800577","shop_name":"\u82b1\u975e\u82b1","phone":"18310733136","qq":"2035362761","im":{"qq":"2035362761","type":3,"shop_id":"100421"},"pay_time":"","send_time":"","receive_time":"","last_status_time":"2014-03-24 15:52","pay_time_out":"2014-03-25 15:52","receive_time_out":"","service_time_out":"","show_receive_button":0,"show_receive_button_detail":0,"has_commented":0,"coupon_id":0,"has_shoppingshow":0,"is_shoppingshow":0,"opt":[],"coupon_msg":"","receive_allow_weixin":0},"goods":[{"mid":4399195,"twitter_id":2157132337,"goods_id":77555517,"price":"0.01","amount":1,"goods_title":"\u6652\u5355\u6d4b\u8bd5\u5355\u54c1\uff0c\u62cd\u4e0b\u4e0d\u53d1\u8d27\u4e0d\u9000\u6b3e\u7684~\u4e0d\u53c2\u52a0\u7f8e\u4e3d\u8bf4\u4efb\u4f55\u6d3b\u52a8\u54e6","goods_img":"http:\/\/img-tx.meilishuo.net\/pic\/u\/0f\/57\/90da8b5330b19646e7670f9a4fba_447_626.c6.jpg","b_pic_url":"http:\/\/imgtest.meiliworks.com\/pic\/b\/0f\/57\/90da8b5330b19646e7670f9a4fba_447_626.c6.jpg","prop":[{"name":"\u989c\u8272","value":"\u9ed1\u8272","is_show":"1"},{"name":"\u5c3a\u7801","value":"36","is_show":"1"}],"coupon_price":"0.00","is_doota":1,"ac_type":3,"refund_id":0,"refund_status_text":"","appeal_id":0,"appeal_status_text":"","service_allow":0,"refund_enter":0,"is_commented":0,"has_commented":0,"appeal":"","article_id":"","receive_allow":2}]},{"order":{"id":3974773,"order_id":140324274661,"status":2,"status_text":"\u7b49\u5f85\u786e\u8ba4\u6536\u8d27","words":"","step":2,"total_price":"0.01","order_price":"0.01","goods_price":"0.01","ctime":"2014-03-24 15:37","shop_id":"100421","seller_uid":"35840103","buyer_uid":"63662389","express_price":"0.00","freight":"\u514d\u8fd0\u8d39","comment":"","express_id":"718392829750","express_company":"\u4e2d\u901a\u5feb\u9012","pay_name":"\u652f\u4ed8\u5b9d","mls_phone":"4000800577","mls_qq":"4000800577","shop_name":"\u82b1\u975e\u82b1","phone":"18310733136","qq":"2035362761","im":{"qq":"2035362761","type":3,"shop_id":"100421"},"pay_time":"2014-03-24 15:38","send_time":"2014-04-15 17:47","receive_time":"","last_status_time":"2014-03-24 15:38","pay_time_out":"2014-03-25 15:37","receive_time_out":"2014-04-25 17:47","service_time_out":"","show_receive_button":0,"show_receive_button_detail":0,"has_commented":0,"coupon_id":0,"has_shoppingshow":0,"is_shoppingshow":0,"opt":[{"type":2,"text":"\u786e\u8ba4\u6536\u8d27"}],"coupon_msg":"","receive_allow_weixin":1},"goods":[{"mid":4399192,"twitter_id":2157132337,"goods_id":77555517,"price":"0.01","amount":1,"goods_title":"\u6652\u5355\u6d4b\u8bd5\u5355\u54c1\uff0c\u62cd\u4e0b\u4e0d\u53d1\u8d27\u4e0d\u9000\u6b3e\u7684~\u4e0d\u53c2\u52a0\u7f8e\u4e3d\u8bf4\u4efb\u4f55\u6d3b\u52a8\u54e6","goods_img":"http:\/\/imgst-dl.meilishuo.net\/pic\/u\/55\/00\/b75af81b8ac5ef1b42f65af862ca_432_572.c6.jpg","b_pic_url":"http:\/\/imgst-dl.meilishuo.net\/pic\/b\/55\/00\/b75af81b8ac5ef1b42f65af862ca_432_572.c6.jpg","prop":[{"name":"\u989c\u8272","value":"\u7ea2\u8272","is_show":"1"},{"name":"\u5c3a\u7801","value":"37","is_show":"1"}],"coupon_price":"0.00","is_doota":1,"ac_type":3,"refund_id":0,"refund_status_text":"","appeal_id":0,"appeal_status_text":"","service_allow":0,"refund_enter":2,"is_commented":0,"has_commented":0,"appeal":"","article_id":"","receive_allow":1}]},{"order":{"id":3974772,"order_id":140324918285,"status":1,"status_text":"\u7b49\u5f85\u53d1\u8d27","words":"","step":1,"total_price":"0.01","order_price":"0.01","goods_price":"0.01","ctime":"2014-03-24 15:32","shop_id":"100421","seller_uid":"35840103","buyer_uid":"63662389","express_price":"0.00","freight":"\u514d\u8fd0\u8d39","comment":"","express_id":"","express_company":"","pay_name":"\u652f\u4ed8\u5b9d","mls_phone":"4000800577","mls_qq":"4000800577","shop_name":"\u82b1\u975e\u82b1","phone":"18310733136","qq":"2035362761","im":{"qq":"2035362761","type":3,"shop_id":"100421"},"pay_time":"2014-03-24 15:37","send_time":"","receive_time":"","last_status_time":"","pay_time_out":"2014-03-25 15:32","receive_time_out":"","service_time_out":"","show_receive_button":0,"show_receive_button_detail":0,"has_commented":0,"coupon_id":0,"has_shoppingshow":0,"is_shoppingshow":0,"opt":[],"coupon_msg":"","receive_allow_weixin":0},"goods":[{"mid":4399191,"twitter_id":2157132337,"goods_id":77555517,"price":"0.01","amount":1,"goods_title":"\u6652\u5355\u6d4b\u8bd5\u5355\u54c1\uff0c\u62cd\u4e0b\u4e0d\u53d1\u8d27\u4e0d\u9000\u6b3e\u7684~\u4e0d\u53c2\u52a0\u7f8e\u4e3d\u8bf4\u4efb\u4f55\u6d3b\u52a8\u54e6","goods_img":"http:\/\/img-tx.meilishuo.net\/pic\/u\/0f\/57\/90da8b5330b19646e7670f9a4fba_447_626.c6.jpg","b_pic_url":"http:\/\/imgtest.meiliworks.com\/pic\/b\/0f\/57\/90da8b5330b19646e7670f9a4fba_447_626.c6.jpg","prop":[{"name":"\u989c\u8272","value":"\u9ed1\u8272","is_show":"1"},{"name":"\u5c3a\u7801","value":"35","is_show":"1"}],"coupon_price":"0.00","is_doota":1,"ac_type":3,"refund_id":0,"refund_status_text":"","appeal_id":0,"appeal_status_text":"","service_allow":0,"refund_enter":1,"is_commented":0,"has_commented":0,"appeal":"","article_id":"","receive_allow":2}]},{"order":{"id":3974700,"order_id":140313538007,"status":5,"status_text":"\u4ea4\u6613\u5173\u95ed","words":"","step":1,"total_price":"0.02","order_price":"0.02","goods_price":"0.02","ctime":"2014-03-13 21:08","shop_id":"100421","seller_uid":"35840103","buyer_uid":"63662389","express_price":"0.00","freight":"\u514d\u8fd0\u8d39","comment":"","express_id":"","express_company":"","pay_name":"\u652f\u4ed8\u5b9d","mls_phone":"4000800577","mls_qq":"4000800577","shop_name":"\u82b1\u975e\u82b1","phone":"18310733136","qq":"2035362761","im":{"qq":"2035362761","type":3,"shop_id":"100421"},"pay_time":"2014-03-14 10:40","send_time":"","receive_time":"","last_status_time":"2014-04-09 14:33","pay_time_out":"2014-03-14 21:08","receive_time_out":"","service_time_out":"","show_receive_button":0,"show_receive_button_detail":0,"has_commented":0,"coupon_id":0,"has_shoppingshow":0,"is_shoppingshow":0,"opt":[],"coupon_msg":"","receive_allow_weixin":0},"goods":[{"mid":4399105,"twitter_id":2158059851,"goods_id":77626967,"price":"0.02","amount":1,"goods_title":"\u6d4b\u8bd5\u5b9d\u8d1d\uff0c\u62cd\u4e0b\u4e0d\u9000\u6b3e\uff0c\u4e0d\u53d1\u8d27\u54e6~","goods_img":"http:\/\/imgtest.meiliworks.com\/pic\/u\/f3\/98\/04ed543f34b0585576958fa645d3_647_542.c6.jpg","b_pic_url":"http:\/\/imgtest-lx.meilishuo.net\/pic\/b\/f3\/98\/04ed543f34b0585576958fa645d3_647_542.c6.jpg","prop":[{"name":"\u989c\u8272","value":"\u9ec4\u8272","is_show":"1"},{"name":"\u5c3a\u7801","value":"-","is_show":"0"}],"coupon_price":"0.00","is_doota":1,"ac_type":0,"refund_id":280645,"refund_status_text":"\u9000\u6b3e\u6210\u529f","appeal_id":0,"appeal_status_text":"","service_allow":0,"refund_enter":0,"is_commented":0,"has_commented":0,"appeal":"","article_id":"","refund_status":41,"receive_allow":2}]},{"order":{"id":3974699,"order_id":140313436757,"status":5,"status_text":"\u4ea4\u6613\u5173\u95ed","words":"","step":1,"total_price":"0.01","order_price":"0.01","goods_price":"0.01","ctime":"2014-03-13 21:08","shop_id":"101277","seller_uid":"2740189","buyer_uid":"63662389","express_price":"0.00","freight":"\u514d\u8fd0\u8d39","comment":"","express_id":"","express_company":"","pay_name":"\u652f\u4ed8\u5b9d","mls_phone":"4000800577","mls_qq":"4000800577","shop_name":"\u4e13\u9500\u7f8e\u8863","phone":"13240733798","qq":"1000000","im":{"qq":"1000000","type":3,"shop_id":"101277"},"pay_time":"2014-03-14 10:39","send_time":"","receive_time":"","last_status_time":"2014-04-09 14:33","pay_time_out":"2014-03-14 21:08","receive_time_out":"","service_time_out":"","show_receive_button":0,"show_receive_button_detail":0,"has_commented":0,"coupon_id":0,"has_shoppingshow":0,"is_shoppingshow":0,"opt":[],"coupon_msg":"","receive_allow_weixin":0},"goods":[{"mid":4399104,"twitter_id":2475537685,"goods_id":89853295,"price":"0.01","amount":1,"goods_title":"\u6d4b\u8bd5\u5546\u54c1\u65e0\u5fe7\u591f\u5b9d\u8d1d\uff0c\u4e0d\u9000\u4e0d\u6362\u614e\u62cd","goods_img":"http:\/\/imgst-dl.meilishuo.net\/pic\/u\/fd\/91\/df0353f3616b053b663f9e60dea2_798_925.c6.jpg","b_pic_url":"http:\/\/imgtest-dl.meiliworks.com\/pic\/b\/fd\/91\/df0353f3616b053b663f9e60dea2_798_925.c6.jpg","prop":[{"name":"\u989c\u8272","value":"\u9ed1\u8272","is_show":"1"},{"name":"\u5c3a\u7801","value":"-","is_show":"0"}],"coupon_price":"0.00","is_doota":1,"ac_type":0,"refund_id":280644,"refund_status_text":"\u9000\u6b3e\u6210\u529f","appeal_id":0,"appeal_status_text":"","service_allow":0,"refund_enter":0,"is_commented":0,"has_commented":0,"appeal":"","article_id":"","refund_status":41,"receive_allow":2}]},{"order":{"id":3209043,"order_id":140227841123,"status":5,"status_text":"\u4ea4\u6613\u5173\u95ed","words":"","step":0,"total_price":"165.00","order_price":"165.00","goods_price":"165.00","ctime":"2014-02-27 12:00","shop_id":"106167","seller_uid":"4499180","buyer_uid":"63662389","express_price":"0.00","freight":"\u514d\u8fd0\u8d39","comment":"","express_id":"","express_company":"","pay_name":"\u652f\u4ed8\u5b9d","mls_phone":"4000800577","mls_qq":"4000800577","shop_name":"\u5c0f\u7433\u978b\u978b\u94fa","phone":"","qq":"","im":{"qq":"","type":3,"shop_id":"106167"},"pay_time":"","send_time":"","receive_time":"","last_status_time":"2014-02-28 12:00","pay_time_out":"2014-02-28 12:00","receive_time_out":"","service_time_out":"","show_receive_button":0,"show_receive_button_detail":0,"has_commented":0,"coupon_id":0,"has_shoppingshow":0,"is_shoppingshow":0,"opt":[],"coupon_msg":"","receive_allow_weixin":0},"goods":[{"mid":3571343,"twitter_id":2213930361,"goods_id":83046581,"price":"165.00","amount":1,"goods_title":"\u79cb\u51ac\u97e9\u7248\u539a\u5e95\u4f11\u95f2\u978b N\u5b57\u6bcd\u8fd0\u52a8\u978b\u771f\u76ae\u8212\u9002\u8dd1\u978b\u4e94\u73af\u9ed1\u8272\u5973\u978b\u60c5\u4fa3\u978b","goods_img":"http:\/\/imgst-dl.meilishuo.net\/pic\/u\/00\/3a\/b207a66bb2c90b50bb11aa65f34d_700_563.c6.jpg","b_pic_url":"http:\/\/imgtest-lx.meilishuo.net\/pic\/b\/00\/3a\/b207a66bb2c90b50bb11aa65f34d_700_563.c6.jpg","prop":[{"name":"\u989c\u8272","value":"\u6e38\u8247\u94bb\u84dd\u8272\u7eff\u978b\u5e95","is_show":"1"},{"name":"\u5c3a\u5bf8","value":"38","is_show":"1"}],"coupon_price":"0.00","is_doota":1,"ac_type":0,"refund_id":0,"refund_status_text":"","appeal_id":0,"appeal_status_text":"","service_allow":0,"refund_enter":0,"is_commented":0,"has_commented":0,"appeal":"","article_id":"","receive_allow":2}]}],"total_num":16,"order_num":16,"shopping_show":{"button":"\u6652\u5355\u9886\u5238","url":"http:\/\/www.meilishuo.com\/club\/single\/554393?frm=shaidan_shuoming"}}';
+$json = '{"time":{"areaName":"","time":"1970-01-01 08:00:00","ftime":"1970-01-01 08:00:00","status":"2","context":"2"},"scantype":{"areaName":"","time":"1970-01-01 08:00:00","ftime":"1970-01-01 08:00:00","status":null,"context":null},"memo":{"areaName":"","time":"1970-01-01 08:00:00","ftime":"1970-01-01 08:00:00","status":null,"context":null}}';
+// printInfo(array_values(json_decode($json,1)));
+printInfo(json_decode($json,1));
+exit;
+
+// $a = array('b'=> '123'.'\r\n'.'456');
+
+// $temp = http_build_query($a);
+// printInfo($temp);
+// exit;
+
+// $d = array(array(array(1,2,3)));
+// echo count($d);
+// $detail['123']['bb']['areaName'] = '111';
+// $detail['23']['db']['d'] = '111';
+// $detail['345']['ccc']['bbbb'] = '222';
+
+// printInfo($detail);
+// echo count($detail);
+// exit;
+
+// $tm  = '20100517 06:54:35';
+// echo date('Y-m-d H:i:s',strtotime($tm));
+// exit;
+
+// $tmp = '[{"context":"\u5df2\u7b7e\u6536,\u7b7e\u6536\u4eba\u662f\u5df2\u7b7e\u6536","time":"2014-04-04 15:05:47","status":"\u7b7e\u6536","areaCode":"","ftime":"2014-04-04 15:05:47","areaName":""}]';
+
+$simple = '<?xml version="1.0" encoding="utf-8" ?><para><note>simple note</note></para>';
+// $p = xml_parser_create();
+// xml_parse_into_struct($p, $simple, $vals, $index);
+// xml_parser_free($p);
+// echo "Index array\n";
+// print_r($index);
+// echo "\nVals array\n";
+// print_r($vals);
+// echo 1234;
+// exit;
+
+/**
+申通物流，一个运单和多个运单的返回结果是不一样的
+ */
+/*
+$str = '<?xml version="1.0" encoding="gb2312" ?> 
+ <root>
+<track>
+<billcode>368084106561</billcode> 
+ <detail>
+<time>20100516 18:51:54</time> 
+<scantype>收件</scantype> 
+<memo>上海崇明公司 的收件员 施先生已收件</memo> 
+</detail>
+ <detail>
+<time>20100516 18:56:13</time> 
+<scantype>发件</scantype> 
+<memo>由上海崇明公司 发往 上海中转部</memo> 
+</detail>
+ <detail>
+<time>20100516 22:34:36</time> 
+<scantype>发件</scantype> 
+<memo>由上海中转部 发往 上海普陀公司</memo> 
+</detail>
+ <detail>
+<time>20100516 22:35:32</time> 
+<scantype>到件</scantype> 
+<memo>快件已到达上海普陀公司</memo> 
+</detail>
+ <detail>
+<time>20100517 06:54:35</time> 
+<scantype>派件</scantype> 
+<memo>上海普陀公司 的派件员 怒江北路13818639411 正在派件</memo> 
+</detail>
+ <detail>
+<time>20100517 09:54:37</time> 
+<scantype>派件</scantype> 
+<memo>上海普陀公司 的派件员 冯丽红 正在派件</memo> 
+</detail>
+ <detail>
+<time>20100517 17:42</time> 
+<scantype>签收</scantype> 
+<memo>已签收,签收人是草签</memo> 
+</detail>
+</track>
+</root>';
+*/
+
+$str = file_get_contents('/Users/cui/cui.out');
+// echo $str;exit;
+// $str = iconv('gb2312', 'utf-8', $str);
+// if (function_exists("mb_convert_encoding")) {
+// 	$str = mb_convert_encoding($str,'utf-8','gb2312');
+// } elseif(function_exists("iconv")) {
+// 	$str = iconv('gb2312','utf-8',$str);
+// } else die("sorry, you have no libs support for charset changes.");
+// echo $str;
+// exit;
+$str = str_replace('gb2312', 'utf-8', $str);
+$str = mb_convert_encoding($str,'utf-8','gb2312');
+// echo $str;exit;
+$xml = simplexml_load_string($str);
+// print_r($xml);
+// $newExpress = json_decode(json_encode($xml),1);
+echo  json_encode($xml);
+// printInfo($newExpress);
+exit;
+
+
+// $sequential = array("foo", "bar", "baz", "blong");
+// var_dump(json_encode($sequential,JSON_FORCE_OBJECT));
+// exit;
 
 // if (in_array(1, array(1,2,3))) {
 // 	echo '1111';
