@@ -1,3 +1,3 @@
 <?php
 echo 'master';
-11;
+exit;
