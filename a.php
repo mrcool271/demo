@@ -1,3 +1,4 @@
 <?php
-echo 'a';exit;
+echo 'a';
 echo 1;
+exit;
