@@ -1,0 +1,4 @@
+<?php
+$s = "asdf";
+echo $s{0};
+echo '    ';

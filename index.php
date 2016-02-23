@@ -3,6 +3,200 @@
  * 一些demo
  */
 
+// var_dump(ctype_alnum('a123@1'));// false 校验字符or数字
+// var_dump(ctype_digit('11'));//true
+// exit;
+
+phpinfo();
+exit;
+
+
+// echo strlen('k');//1
+// echo chr(0xe6).chr(0x88).chr(0x91);//我
+// exit;
+// $str = '中';
+// echo $a = strlen($str);//3
+// var_dump($str[0]);
+// echo ord("$str[1]");
+
+
+// echo mb_internal_encoding();//PHP的内部编码ISO-8859-1
+// echo mb_strlen('中文a字1符','UTF-8');//6
+// echo mb_strlen('中文a字1符','GBK');//8
+// echo mb_strlen('中文a字1符','GB2312');//10
+// exit;
+
+
+
+setcookie('1','2');
+$currentCookieParams = session_get_cookie_params();
+print_r($currentCookieParams);
+exit;
+
+
+
+$str = '123456';
+// echo md5($str,true);
+// echo md5(md5($str));
+echo md5(md5($str,true));
+exit;
+
+
+$str = '<script>alert(1);</script>';
+echo htmlspecialchars(strip_tags($str));
+exit;
+
+
+// phpinfo();
+print_r( getenv('HTTP_X_FORWARDED_FOR'));
+// print_r($_SERVER);
+exit;
+
+// echo md5('123456');exit;
+echo md5(substr(hash('sha256', '123456'), 0, 40));
+// echo (hash('sha256', 'The quick brazy dog.'));
+exit;
+
+// echo md5(uniqid(mt_rand(),true) . $_SERVER['REQUEST_TIME']. mt_rand());//获取唯一值
+
+
+
+
+exit;
+
+
+if(0 == 'a') {
+	echo 999;exit;//√ 可以通过的，这是一个坑
+}
+
+echo 0==''?11:2;
+// echo  in_array(0, array(1,'')) ? '1':'2';
+exit;
+
+phpinfo();
+exit;
+
+echo bcdiv('10','100',4);
+exit;
+
+
+$a = '0000-00-00 00:00:00';
+echo strtotime($a);
+exit;
+
+$result = array('getParamPP'=>array('getMasdF'=>'1','getMasdM'=>array('dG'=>1),'getMasdN'=>'3','getMasdP'=>'4',));
+$a = ArrayKeyToCase($result);
+print_r($a);
+/**
+ * 数组key值风格转换
+ * type 0 将Java风格转换为C的风格， 1 将C风格转换为Java的风格
+ * @param array $result 需要转换的数组
+ * @param number $case 转换类型，默认小写
+ */
+function ArrayKeyToCase($result, $case=0) {
+	$temp = array();
+	foreach ( $result as $key => $item ) {
+		if ( $case ) {
+			$keyTemp = ucfirst(preg_replace("/_([a-zA-Z])/e", "strtoupper('\\1')", $key));
+		} else {
+			$keyTemp = strtolower(trim(preg_replace("/[A-Z]/", "_\\0", $key), "_"));
+		}
+		$temp[$keyTemp] = $item;
+		if ( is_array($item) ) {
+			$temp[$keyTemp] = ArrayKeyToCase($item, $case);
+		}
+	}
+	return $temp;
+}
+exit;
+
+
+
+list($microTime, $seconds) = explode(" ", microtime());
+echo microtime(1);
+echo microtime();
+exit;
+
+$a = 1406622733000;
+echo date('Y-m-d H:i:s',substr($a, 0,-3));
+exit;
+
+
+echo $member_id = 140217150844012121111;
+echo "--";
+echo (int)$member_id;
+echo gettype($member_id);
+exit;
+
+$number = 10001.22;
+$rate1 = 100;
+$rate2 = 1000;
+
+testt($number, $rate1);
+echo "------\n";
+testt($number, $rate2);
+
+function testt($number, $rate){
+	$aa = $number * $rate;
+	$aa = bcmul($number, $rate);
+	var_dump($aa);
+	$aa = intval($aa);
+	var_dump($aa);
+	$aa = bcdiv($aa, $rate, 2);
+	var_dump($aa);
+}
+
+exit;
+
+echo $aa = intval(10001.22*100);
+echo '<br/>';
+echo $aa / 100;
+echo '<br/>';
+echo $aa = intval(10001.22*1000);
+echo '<br/>';
+echo ($aa / 1000);
+// 1000121
+// 10001.21
+// 10001220
+// 10001.22
+exit;
+
+echo '{"totalCount":10,"items":[{"productList":[{"orderNo":"1597902717530001784","productId":"20140729110505","productCount":1,"productPrice":1,"storeId":null,"merchantId":null,"plazaId":null,"productInfo":"{\"appDetail\":\"http:\/\/www.126.com\",\"description\":\"Rush\u4ee3\u91d1\u52381\u63cf\u8ff0\",\"freeQuotaNum\":30,\"isNeedValidate\":0,\"limitPerMember\":0,\"limitPerOrder\":0,\"merchant\":{\"address\":\"\u91d1\u5730\u4e2d\u5fc325\u5c42B\u5ea7\u7b2c\u56db\u4f1a\u8bae\u5ba4\",\"merchantNo\":\"20140729110339\",\"name\":\"Rush\",\"telephone\":\"110\"},\"origPrice\":3,\"productNo\":\"20140729110505\",\"productType\":1001,\"remark\":[],\"saleEndTime\":1406822399000,\"salePrice\":\"0.01\",\"saleStartTime\":1406563200000,\"saleStatus\":2,\"soldNum\":0,\"stockNum\":8,\"subTitle\":\"Rush\u4ee3\u91d1\u52381\u526f\u6807\u9898\",\"title\":\"Rush\u4ee3\u91d1\u52381\",\"topPics\":[\"h00624b89663af85de8ebe72f9d60ca01bc\",\"h00a940c1ffc2418e739477abb266098da9\"],\"totalNum\":200,\"validEndTime\":1406822399000,\"validStartTime\":1406563200000,\"wapDetail\":\"http:\/\/www.126.com\",\"webDetail\":\"http:\/\/www.baidu.com\"}"}],"couponList":null,"presentCoupons":null,"createTime":1406622733000,"updateTime":1406623248000,"version":2,"orderNo":"1597902717530001784","deleteFlag":0,"orderCode":7008,"orderSrc":0,"memberId":"14072317074201224","orderAmt":1,"realPayAmt":1,"orderStatus":"PAY_SUCCESS","usePoint":0,"usePointDiscount":0,"returnPoint":0,"payOrderNo":"20140729163219001677","payTime":1406623248520,"parent":null,"remark":null,"usePointResult":false,"usePointMsg":null,"yazuoMemberId":0,"orderMarkVo":{"orderNo":"1597902717530001784","refundFlag":0,"payFlag":1,"usePointFlag":0,"useCouponFlag":0,"createTicketFlag":0,"applyRefundFlag":0,"auditRefundFailFlag":0,"auditRefundSuccessFlag":0,"payTimeoutFlag":0,"returnPointFlag":0},"orderPosExtVo":null},{"productList":[{"orderNo":"4628227039840001572","productId":"20140729110603","productCount":1,"productPrice":1,"storeId":null,"merchantId":null,"plazaId":null,"productInfo":"{\"appDetail\":\"www.wanhui.cn\",\"description\":\"Rush\u4ee3\u91d1\u52382\u63cf\u8ff0\",\"freeQuotaNum\":70,\"isNeedValidate\":0,\"limitPerMember\":0,\"limitPerOrder\":0,\"merchant\":{\"address\":\"\u91d1\u5730\u4e2d\u5fc325\u5c42B\u5ea7\u7b2c\u56db\u4f1a\u8bae\u5ba4\",\"merchantNo\":\"20140729110339\",\"name\":\"Rush\",\"telephone\":\"110\"},\"origPrice\":2,\"productNo\":\"20140729110603\",\"productType\":1001,\"remark\":[],\"saleEndTime\":1406822399000,\"salePrice\":\"0.01\",\"saleStartTime\":1406563200000,\"saleStatus\":2,\"soldNum\":0,\"stockNum\":10,\"subTitle\":\"Rush\u4ee3\u91d1\u52382\u526f\u6807\u9898\",\"title\":\"Rush\u4ee3\u91d1\u52382\",\"topPics\":[\"h006e0bbcdc1bc5521d0d946fedf81e8d3b\",\"h00e3c3fac4ff91a2948bb135b355cb6669\"],\"totalNum\":400,\"validEndTime\":1406822399000,\"validStartTime\":1406563200000,\"wapDetail\":\"www.wanhui.cn\",\"webDetail\":\"www.csdn.net\"}"}],"couponList":null,"presentCoupons":null,"createTime":1406616539000,"updateTime":1406616539000,"version":0,"orderNo":"4628227039840001572","deleteFlag":0,"orderCode":7008,"orderSrc":0,"memberId":"14072317074201224","orderAmt":1,"realPayAmt":1,"orderStatus":"INITIAL","usePoint":0,"usePointDiscount":0,"returnPoint":0,"payOrderNo":null,"payTime":null,"parent":null,"remark":null,"usePointResult":false,"usePointMsg":null,"yazuoMemberId":0,"orderMarkVo":{"orderNo":"4628227039840001572","refundFlag":0,"payFlag":0,"usePointFlag":0,"useCouponFlag":0,"createTicketFlag":0,"applyRefundFlag":0,"auditRefundFailFlag":0,"auditRefundSuccessFlag":0,"payTimeoutFlag":0,"returnPointFlag":0},"orderPosExtVo":null},{"productList":[{"orderNo":"0788607126170001392","productId":"20140729110505","productCount":1,"productPrice":1,"storeId":null,"merchantId":null,"plazaId":null,"productInfo":"{\"appDetail\":\"http:\/\/www.126.com\",\"description\":\"Rush\u4ee3\u91d1\u52381\u63cf\u8ff0\",\"freeQuotaNum\":30,\"isNeedValidate\":0,\"limitPerMember\":0,\"limitPerOrder\":0,\"merchant\":{\"address\":\"\u91d1\u5730\u4e2d\u5fc325\u5c42B\u5ea7\u7b2c\u56db\u4f1a\u8bae\u5ba4\",\"merchantNo\":\"20140729110339\",\"name\":\"Rush\",\"telephone\":\"110\"},\"origPrice\":3,\"productNo\":\"20140729110505\",\"productType\":1001,\"remark\":[],\"saleEndTime\":1406822399000,\"salePrice\":\"0.01\",\"saleStartTime\":1406563200000,\"saleStatus\":2,\"soldNum\":0,\"stockNum\":10,\"subTitle\":\"Rush\u4ee3\u91d1\u52381\u526f\u6807\u9898\",\"title\":\"Rush\u4ee3\u91d1\u52381\",\"topPics\":[\"h00624b89663af85de8ebe72f9d60ca01bc\",\"h00a940c1ffc2418e739477abb266098da9\"],\"totalNum\":200,\"validEndTime\":1406822399000,\"validStartTime\":1406563200000,\"wapDetail\":\"http:\/\/www.126.com\",\"webDetail\":\"http:\/\/www.baidu.com\"}"}],"couponList":null,"presentCoupons":null,"createTime":1406616174000,"updateTime":1406616301000,"version":2,"orderNo":"0788607126170001392","deleteFlag":0,"orderCode":7008,"orderSrc":0,"memberId":"14072317074201224","orderAmt":1,"realPayAmt":1,"orderStatus":"PAY_SUCCESS","usePoint":0,"usePointDiscount":0,"returnPoint":0,"payOrderNo":"20140729144258001815","payTime":1406616301473,"parent":null,"remark":null,"usePointResult":false,"usePointMsg":null,"yazuoMemberId":0,"orderMarkVo":{"orderNo":"0788607126170001392","refundFlag":0,"payFlag":1,"usePointFlag":0,"useCouponFlag":0,"createTicketFlag":0,"applyRefundFlag":0,"auditRefundFailFlag":0,"auditRefundSuccessFlag":0,"payTimeoutFlag":0,"returnPointFlag":0},"orderPosExtVo":null},{"productList":[{"orderNo":"4331736246280001921","productId":"20140724092906","productCount":1,"productPrice":100,"storeId":null,"merchantId":null,"plazaId":null,"productInfo":"{\"appDetail\":\"1\",\"description\":\"1\",\"freeQuotaNum\":0,\"isNeedValidate\":0,\"limitPerMember\":5,\"limitPerOrder\":5,\"merchant\":{\"address\":\"12\",\"merchantNo\":\"20140724092811\",\"name\":\"\u5546\u62372128\",\"telephone\":\"12\"},\"origPrice\":10000,\"productNo\":\"20140724092906\",\"productType\":1001,\"remark\":[],\"saleEndTime\":1406822399000,\"salePrice\":\"1\",\"saleStartTime\":1406131200000,\"saleStatus\":2,\"soldNum\":0,\"stockNum\":63,\"subTitle\":\"\u4e3b\u6807\u9898\",\"title\":\"\u4e3b\u6807\u98982129\",\"topPics\":[\"h00bb88ed174f62beacbc16e9ebe2f22d73\"],\"totalNum\":105,\"validEndTime\":1406822399000,\"validStartTime\":1406131200000,\"wapDetail\":\"1\",\"webDetail\":\"1\"}"}],"couponList":null,"presentCoupons":null,"createTime":1406537949000,"updateTime":1406537949000,"version":0,"orderNo":"4331736246280001921","deleteFlag":0,"orderCode":7008,"orderSrc":0,"memberId":"14072317074201224","orderAmt":100,"realPayAmt":100,"orderStatus":"INITIAL","usePoint":0,"usePointDiscount":0,"returnPoint":0,"payOrderNo":null,"payTime":null,"parent":null,"remark":null,"usePointResult":false,"usePointMsg":null,"yazuoMemberId":0,"orderMarkVo":{"orderNo":"4331736246280001921","refundFlag":0,"payFlag":0,"usePointFlag":0,"useCouponFlag":0,"createTicketFlag":0,"applyRefundFlag":0,"auditRefundFailFlag":0,"auditRefundSuccessFlag":0,"payTimeoutFlag":0,"returnPointFlag":0},"orderPosExtVo":null},{"productList":[{"orderNo":"2831226204250001946","productId":"20140724093137","productCount":1,"productPrice":100,"storeId":null,"merchantId":null,"plazaId":null,"productInfo":"{\"appDetail\":\"1\",\"description\":\"1\",\"freeQuotaNum\":5,\"isNeedValidate\":0,\"limitPerMember\":4,\"limitPerOrder\":3,\"merchant\":{},\"origPrice\":10000,\"productNo\":\"20140724093137\",\"productType\":2001,\"remark\":[{\"appDetail\":\"1\",\"packageProductNo\":\"20140724093137\",\"productNo\":\"20140724092906\",\"productNum\":3,\"productOrder\":1,\"productTitle\":\"\u4e3b\u6807\u98982129\",\"productType\":1001,\"validEndTime\":1406822399000,\"validStartTime\":1406208697000},{\"appDetail\":\"http:\/\/10.1.169.16:9711\/static\/detail.html\",\"packageProductNo\":\"20140724093137\",\"productNo\":\"20140724093025\",\"productNum\":5,\"productOrder\":2,\"productTitle\":\"\u6d4b\u8bd5\u56fd\u8d38\u5238\",\"productType\":1001,\"validEndTime\":1406822399000,\"validStartTime\":1406208697000}],\"saleEndTime\":1406822399000,\"salePrice\":\"1\",\"saleStartTime\":1406131200000,\"saleStatus\":2,\"soldNum\":0,\"stockNum\":4,\"subTitle\":\"1\",\"title\":\"\u5957\u99102133\",\"topPics\":[\"h00bb88ed174f62beacbc16e9ebe2f22d73\"],\"totalNum\":10,\"validEndTime\":1406208697000,\"validStartTime\":1406208697000,\"wapDetail\":\"1\",\"webDetail\":\"1\"}"}],"couponList":null,"presentCoupons":null,"createTime":1406535307000,"updateTime":1406536855000,"version":2,"orderNo":"2831226204250001946","deleteFlag":0,"orderCode":7008,"orderSrc":0,"memberId":"14072317074201224","orderAmt":100,"realPayAmt":100,"orderStatus":"PAY_SUCCESS","usePoint":0,"usePointDiscount":0,"returnPoint":0,"payOrderNo":"20140728162228001990","payTime":1406536855640,"parent":null,"remark":null,"usePointResult":false,"usePointMsg":null,"yazuoMemberId":0,"orderMarkVo":{"orderNo":"2831226204250001946","refundFlag":0,"payFlag":1,"usePointFlag":0,"useCouponFlag":0,"createTicketFlag":0,"applyRefundFlag":0,"auditRefundFailFlag":0,"auditRefundSuccessFlag":0,"payTimeoutFlag":0,"returnPointFlag":0},"orderPosExtVo":null},{"productList":[{"orderNo":"4628497338370001442","productId":"20140724093137","productCount":1,"productPrice":100,"storeId":null,"merchantId":null,"plazaId":null,"productInfo":"{\"appDetail\":\"1\",\"description\":\"1\",\"freeQuotaNum\":5,\"isNeedValidate\":0,\"limitPerMember\":4,\"limitPerOrder\":3,\"merchant\":{},\"origPrice\":10000,\"productNo\":\"20140724093137\",\"productType\":2001,\"remark\":[{\"appDetail\":\"1\",\"packageProductNo\":\"20140724093137\",\"productNo\":\"20140724092906\",\"productNum\":3,\"productOrder\":1,\"productTitle\":\"\u4e3b\u6807\u98982129\",\"productType\":1001,\"validEndTime\":1406822399000,\"validStartTime\":1406208697000},{\"appDetail\":\"http:\/\/10.1.169.16:9711\/static\/detail.html\",\"packageProductNo\":\"20140724093137\",\"productNo\":\"20140724093025\",\"productNum\":5,\"productOrder\":2,\"productTitle\":\"\u6d4b\u8bd5\u56fd\u8d38\u5238\",\"productType\":1001,\"validEndTime\":1406822399000,\"validStartTime\":1406208697000}],\"saleEndTime\":1406822399000,\"salePrice\":\"1\",\"saleStartTime\":1406131200000,\"saleStatus\":2,\"soldNum\":0,\"stockNum\":5,\"subTitle\":\"1\",\"title\":\"\u5957\u99102133\",\"topPics\":[\"h00bb88ed174f62beacbc16e9ebe2f22d73\"],\"totalNum\":10,\"validEndTime\":1406208697000,\"validStartTime\":1406208697000,\"wapDetail\":\"1\",\"webDetail\":\"1\"}"}],"couponList":null,"presentCoupons":null,"createTime":1406267010000,"updateTime":1406268815000,"version":1,"orderNo":"4628497338370001442","deleteFlag":0,"orderCode":7006,"orderSrc":0,"memberId":"14072317074201224","orderAmt":100,"realPayAmt":100,"orderStatus":"CLOSE","usePoint":0,"usePointDiscount":0,"returnPoint":0,"payOrderNo":null,"payTime":null,"parent":null,"remark":null,"usePointResult":false,"usePointMsg":null,"yazuoMemberId":0,"orderMarkVo":{"orderNo":"4628497338370001442","refundFlag":0,"payFlag":0,"usePointFlag":0,"useCouponFlag":0,"createTicketFlag":0,"applyRefundFlag":0,"auditRefundFailFlag":0,"auditRefundSuccessFlag":0,"payTimeoutFlag":0,"returnPointFlag":0},"orderPosExtVo":null}]}';
+exit;
+
+$a = array(array(1,2,3),array(4,5,6));
+$b = array(array(11,22,33),array(44,55,66));
+$a = array_merge($a,$b);
+print_r($a);
+exit;
+
+//驼峰格式转换
+$name = ab_cdddd;
+echo  lcfirst(preg_replace("/_([a-zA-Z])/e", "strtoupper('\\1')", $name));
+echo  ucfirst(preg_replace("/_([a-zA-Z])/e", "strtoupper('\\1')", $name));
+
+exit;
+
+
+$a = array(1,2,3,4);
+$b = array(3,4,6);
+//array_push($a, $b);
+$c = array_merge($a,$b);
+print_r($c);
+exit;
+
+
+$a = array('a'=>array(1,'b'=>array(7,'e'=>89),3),'c'=>array('d'=>4,5,6));
+print_r(json_decode(json_encode($a)));
+exit;
+
+
+var_dump(file_put_contents("tmp.txt","Hello World. Testing!"));//注意权限
+exit;
+
+echo date('Y-m-d h:i:s', time());
+exit;
+
 //格式化数字
 $t = 0.0001;
 echo round($t,2);//0
