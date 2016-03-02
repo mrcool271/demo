@@ -1,5 +1,11 @@
 <?php 
-
+$callback = $_GET['callback'];
+echo $callback.'({
+"code": "CA1998",
+"price": 1780,
+"tickets": 5
+})';
+exit;
 // printInfo($_SERVER);exit;
 
 $branch = 3;
