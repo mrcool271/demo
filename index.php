@@ -138,6 +138,7 @@ testt($number, $rate2);
 
 function testt($number, $rate){
 	$aa = $number * $rate;
+	var_dump($aa);
 	$aa = bcmul($number, $rate);
 	var_dump($aa);
 	$aa = intval($aa);
@@ -149,6 +150,7 @@ function testt($number, $rate){
 exit;
 
 echo $aa = intval(10001.22*100);
+var_dump(sprintf('%.10f',10001.22*100));
 echo '<br/>';
 echo $aa / 100;
 echo '<br/>';
