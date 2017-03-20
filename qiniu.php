@@ -71,7 +71,7 @@ function downloads($filename)
 // echo $dataurl;
 // exit;
 // 开始解析数据
-// if ($dataurl != "") {
+if ($dataurl != "") {
     // 准备工作
     $content = $dataurl; // 读取json数据
 //     print_r($content);
@@ -80,7 +80,7 @@ function downloads($filename)
                                                                        // exit;
 //                                                                        // 新建文件夹
     $foldername = "qiniu";
-//     createFolder($foldername);
+    createFolder($foldername);
     // 循环下载文件
 //     $i = 10;
     for ($i = 0; $i < $count_; $i ++) {
@@ -94,7 +94,7 @@ function downloads($filename)
 //     $html .= "==>打包完成，开始准备下载！<b>请在下载完成后关闭本页面,否则会造成文件缺失。</b></br>";
     // 后续删除文件
     // 随机生成替代文件名
-//     $path = './';
+    $path = './qiniu/';
     // $foldername_new = generate(9);
     // if (! rename($path, $foldername_new)) {
     // $html .= "Could not remove!";
@@ -108,7 +108,7 @@ function downloads($filename)
             exit('无法打开文件，或者文件创建失败');
         }
         // 下载当前目录所在文件夹
-        addFileToZip("./qiniu/", $zip);
+        addFileToZip($path, $zip);
         $zip->close(); // 关闭
     }
     
@@ -119,18 +119,21 @@ function downloads($filename)
     header("Content-Description: File Transfer");
     header('Content-disposition: attachment; filename=' . basename($filename)); // 文件名
     header("Content-Type: application/zip"); // zip格式的
-    header("Content-Transfer-Encoding: bytes"); // 告诉浏览器，这是二进制文件
+    header("Content-Transfer-Encoding: binary"); // 告诉浏览器，这是二进制文件
     header('Content-Length: ' . filesize($filename)); // 告诉浏览器，文件大小
-    readfile($filename);
+    ob_clean();
+    ob_end_clean();
+    flush();
+    @readfile($filename);
     
 //     $html .= "==>感谢您使用我们的服务！祝您生活愉快！</br></body></html>";
 //     // echo $html;
     // var_dump($filename);
     //downloads($filename);
-// } else {
-//     $html .= "错误！</body></html>";
-//     echo $html;
-// }
+} else {
+    $html .= "错误！</body></html>";
+    echo $html;
+}
 
 // 四、将文件夹打包成zip文件
 function addFileToZip($path, $zip)
