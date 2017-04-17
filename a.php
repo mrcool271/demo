@@ -1,5 +1,5 @@
 <?php
-
+echo '222';exit;
 echo 'master';
 print_r($_SERVER);
 exit;
