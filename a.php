@@ -1,5 +1,5 @@
 <?php
-echo 'master';
+echo 'dev';
 print_r($_SERVER);
 exit;
 
