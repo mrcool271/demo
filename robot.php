@@ -14,8 +14,8 @@ function request_by_curl($remote_server, $post_string) {
 }  
  
 $webhook = "https://oapi.dingtalk.com/robot/send?access_token=3da3d630072c898307d3d798cd688bb066231b70e396c0111fe2e85a6b7c5839";
-$message="robot test";
-$data = array ('msgtype' => 'text','text' => array ('content' => $message));
+$message="robot at test";
+$data = array ('msgtype' => 'text','text' => array ('content' => $message), 'at' => array('atMobiles' => array('18600369129','18600369129'), 'isAtAll' => false));
 $data_string = json_encode($data);
  
 $result = request_by_curl($webhook, $data_string);  
