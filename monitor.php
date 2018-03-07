@@ -1,22 +1,19 @@
 <?php
-// $list = scandir(__DIR__);
+$key = 0;
+echo $key + 1;
+exit;
 
-$file = "/Users/cui/Sites/tgjr/sqjr_ver2_api.com/storage/logs/laravel.log"; 
-$date = '2017-05-02 11:36';
-$log = '';
-$command = "tail -5000 {$file} | grep '.ERROR.' | grep '{$date}' ";
-exec($command . ' 2>&1', $log, $status);
-if($log) {
-    $str = "# laravel.log \r\n ";
-    $message = [];
-    $count = count($log);
-    $message[] = " ## 【Admin - ERROR - {$count} 条】";
-    foreach ($log as $key => $val) {
-        $message[] = $val;
-        $message[] = "---------------------";
-    }
-}
-// echo $log = implode(PHP_EOL, $log);
+// echo 12300.00/10000;exit;
+echo date("Y-m-d", strtotime("+1 day")); 
+exit;
+echo $minTime = date("Y-m-d H:i:s", strtotime(date("Y-m-d", strtotime("+5 day"))));
+//echo $today = date('Y-m-d H:i:s', strtotime(date("Y-m-d", time())));
+//echo $time = date("Y/m/d H:i", strtotime("-1 min"));
+//echo date("d/M/Y:H:i", strtotime("-1 min"));
+exit;
+
+
+
 // 将会发送到钉钉webhook的数据
 $data = [
     'msgtype' => 'markdown',
@@ -25,12 +22,63 @@ $data = [
         'text' => ''
     ]
 ];
+$message = [];
 
-/**
- * 推送到钉钉
- */
-// 原生markdown中两个换行才是真的换行，别听钉钉文档瞎吹，一个\n不行的
-// 我在这儿被坑了超久
+// api错误日志
+$file = "/Users/cui/Sites/tgjr/sqjr_ver2_api.com/storage/logs/laravel.log"; 
+$date = '2017-05-02 11:36';
+$log = '';
+$command = "tail -2000 {$file} | grep '.ERROR.' | grep '{$date}' ";
+exec($command . ' 2>&1', $log, $status);
+if($log) {
+    $i = 1;
+    $count = count($log);
+    $message[] = "【API - ERROR - {$count} 条 - {$date}】";
+    $message[] = "------------------";
+    foreach ($log as $key => $val) {
+        $message[] = "{$i}. $val";
+        $message[] = "------------------";
+        $i++;
+    }
+}
+
+// admin
+$file = "/Users/cui/Sites/tgjr/sqjr_ver2.com/storage/logs/laravel.log";
+$date = '2017-05';
+$log = '';
+$command = "tail -2000 {$file} | grep '.ERROR.' | grep '{$date}' ";
+exec($command . ' 2>&1', $log, $status);
+if($log) {
+    $i = 1;
+    $count = count($log);
+    $message[] = "【Admin - ERROR - {$count} 条】";
+
+    foreach ($log as $key => $val) {
+        $message[] = "{$i}. $val";
+        $message[] = "------------------";
+        $i++;
+    }
+}
+
+// M
+$file = "/Users/cui/Sites/tgjr/sqjr_ver2_ui.com/storage/logs/laravel.log";
+$date = '201';
+$log = '';
+$command = "tail -2000 {$file} | grep '.ERROR.' | grep '{$date}' ";
+exec($command . ' 2>&1', $log, $status);
+if($log) {
+    $i = 1;
+    $count = count($log);
+    $message[] = "【M - ERROR - {$count} 条】";
+
+    foreach ($log as $key => $val) {
+        $message[] = "{$i}. $val";
+        $message[] = "------------------";
+        $i++;
+    }
+}
+
+// 原生markdown中两个换行才是真的换行，别听钉钉文档瞎吹，一个\n不行的,我在这儿被坑了超久...
 $data['markdown']['text'] = implode('\r\n\r\n ', $message);
 $data = json_encode($data);
 // json编码后，上面的\r\n\r\n会变成\\r\\n\\r\\n，所以要替换成正常的状态

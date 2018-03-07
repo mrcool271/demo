@@ -1,4 +1,9 @@
 <?php
+
+$a = (object) [];
+echo json_encode($a);
+exit;
+
 $errors = array();
 $warnings = array();
 if ( extension_loaded('ionCube Loader') ) {
